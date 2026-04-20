@@ -529,13 +529,58 @@ function refreshAllCoSelects(){
 }
 let siEditStage=null, siEditIdx=null; // for stage item modal
 
-// ===== STORAGE =====
-function gs(){try{return JSON.parse(localStorage.getItem('pjm5')||'{}')}catch{return{}}}
-function ss(s){try{localStorage.setItem('pjm5',JSON.stringify(s))}catch{}}
-function gmd(m){const s=gs();s[m]=s[m]||{};return s[m]}
-function smd(m,d){const s=gs();s[m]=d;ss(s)}
-function gad(){const s=gs();s._a=s._a||{};return s._a}
-function sad(d){const s=gs();s._a=d;ss(s)}
+// ===== STORAGE (Google Sheets via GAS) =====
+const GAS_URL='https://script.google.com/macros/s/AKfycby3Y8hEECLYZdp0xphcCpipV3zPWX4YmZIX1FJ-13ilHTOBiXo76QmnJhyicP31RqsV/exec';
+let _cache={};
+let _dirty=false;
+let _saveTimer=null;
+let _loaded=false;
+
+function gs(){return _cache;}
+function ss(s){
+  _cache=s;
+  // debounce save to GAS
+  if(_saveTimer)clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>saveToGAS(),800);
+  // also save to localStorage as backup
+  try{localStorage.setItem('pjm5',JSON.stringify(s))}catch{}
+}
+function gmd(m){_cache[m]=_cache[m]||{};return _cache[m]}
+function smd(m,d){_cache[m]=d;ss(_cache);}
+function gad(){_cache._a=_cache._a||{};return _cache._a}
+function sad(d){_cache._a=d;ss(_cache);}
+
+function saveToGAS(){
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify(_cache)}).catch(()=>{});
+}
+
+function loadFromGAS(callback){
+  // show loading indicator
+  const body=document.body;
+  const loader=document.createElement('div');
+  loader.id='gas-loader';
+  loader.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px';
+  loader.innerHTML='<div style="font-size:14px;color:#6a6960;font-family:inherit">データを読み込んでいます...</div>';
+  body.appendChild(loader);
+
+  fetch(GAS_URL+'?t='+Date.now())
+    .then(r=>r.json())
+    .then(data=>{
+      _cache=data||{};
+      // also save to localStorage as backup
+      try{localStorage.setItem('pjm5',JSON.stringify(_cache))}catch{}
+      _loaded=true;
+      body.removeChild(loader);
+      if(callback)callback();
+    })
+    .catch(()=>{
+      // fallback to localStorage
+      try{_cache=JSON.parse(localStorage.getItem('pjm5')||'{}')}catch{_cache={};}
+      _loaded=true;
+      body.removeChild(loader);
+      if(callback)callback();
+    });
+}
 
 // Get stages (admin-edited version takes precedence)
 function getStages(){
@@ -550,9 +595,17 @@ function login(){
   const w=document.getElementById('lw').value,pw=document.getElementById('lpw').value;
   const e=document.getElementById('lerr');
   if(!w){e.textContent='担当者を選択してください';return}
-  if(w==='admin'){if(pw!==APW){e.textContent='パスワードが違います';return}CUR={t:'admin'};pg('pg-admin');initAdmin();}
-  else{const m=MB.find(x=>x.id===w);if(!m||pw!==m.pw){e.textContent='パスワードが違います';return}CUR={t:'member',mid:w};pg('pg-member');initMember(w);}
+  // validate password first
+  if(w==='admin'){if(pw!==APW){e.textContent='パスワードが違います';return}}
+  else{const m=MB.find(x=>x.id===w);if(!m||pw!==m.pw){e.textContent='パスワードが違います';return}}
   e.textContent='';
+  // load latest data from GAS then proceed
+  loadFromGAS(()=>{
+    loadMembers();
+    rebuildLoginSelect();
+    if(w==='admin'){CUR={t:'admin'};pg('pg-admin');initAdmin();}
+    else{const m=MB.find(x=>x.id===w);CUR={t:'member',mid:w};pg('pg-member');initMember(w);}
+  });
 }
 function logout(){CUR=null;document.getElementById('lpw').value='';document.getElementById('lerr').textContent='';pg('pg-login')}
 function pg(id){
@@ -1730,6 +1783,7 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 
 // ===== DATA BACKUP / RESTORE =====
 function exportData(){
+  saveToGAS(); // ensure latest saved
   const data=gs();
   const now=new Date();
   const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
@@ -1850,8 +1904,8 @@ function downloadShiftCSV(){
 }
 
 // ===== INIT =====
-loadMembers();
-rebuildLoginSelect();
+// pre-load data so login select shows correct member names
+loadFromGAS(()=>{loadMembers();rebuildLoginSelect();});
 </script>
 </body>
 </html>
