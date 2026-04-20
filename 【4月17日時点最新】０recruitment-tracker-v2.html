@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>進捗・業務管理マスター</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--sf:#fff;--sf2:#f0efe9;--sf3:#e5e4dc;
+  --tx:#1a1a16;--tx2:#6a6960;--tx3:#a8a79d;
+  --bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.16);
+  --ac:#2d6a4f;--acl:#e6f4ee;--act:#1a4731;
+  --bl:#1d5fa8;--bll:#e6f0fb;
+  --am:#b45309;--aml:#fef3c7;
+  --rd:#be3a3a;--rdl:#fdeaea;
+  --s1b:#c5d8f7;--s1r:#3b6dbf;--s1t:#1a3a80;
+  --s2b:#9fe0c8;--s2r:#0f7a58;--s2t:#065c3d;
+  --s3b:#f5c4a8;--s3r:#b84c1a;--s3t:#7a2a08;
+  --s4b:#fcd97a;--s4r:#9a6c00;--s4t:#6b4400;
+  --r:8px;--rl:12px;--rx:16px;
+}
+body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;min-height:100vh}
+/* login */
+.lp{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.lb{background:var(--sf);border:0.5px solid var(--bd2);border-radius:var(--rx);padding:40px 36px;width:100%;max-width:380px}
+.brand{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--tx3);text-transform:uppercase;margin-bottom:28px}
+h1{font-size:20px;font-weight:600;margin-bottom:6px}
+.lsub{font-size:13px;color:var(--tx2);margin-bottom:28px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:14px;background:var(--sf);color:var(--tx);outline:none;transition:border-color .15s;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(45,106,79,.1)}
+.field textarea{resize:vertical;min-height:60px}
+.err{font-size:12px;color:var(--rd);min-height:18px;margin-bottom:8px}
+.hint{font-size:11px;color:var(--tx3);text-align:center;margin-top:16px;line-height:2.1}
+.hint code{background:var(--sf2);padding:2px 7px;border-radius:4px;font-size:11px;font-family:monospace}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 20px;border-radius:var(--r);border:0.5px solid var(--bd2);background:transparent;color:var(--tx);font-size:13px;font-weight:500;cursor:pointer;transition:all .12s;font-family:inherit}
+.btn:hover{background:var(--sf2)}.btn:active{transform:scale(.98)}
+.btn-p{background:var(--tx);color:var(--sf);border-color:transparent}.btn-p:hover{opacity:.83;background:var(--tx)}
+.btn-sm{padding:5px 12px;font-size:12px}.btn-xs{padding:3px 9px;font-size:11px}
+.btn-g{border-color:transparent;color:var(--tx2)}.btn-g:hover{color:var(--tx);background:var(--sf2)}
+.btn-d{color:var(--rd);border-color:rgba(190,58,58,.2)}.btn-d:hover{background:var(--rdl)}
+.btn-ac{background:var(--ac);color:#fff;border-color:transparent}.btn-ac:hover{opacity:.85;background:var(--ac)}
+/* app shell */
+.app{display:none;flex-direction:column;min-height:100vh}.app.on{display:flex}
+.nav{background:var(--sf);border-bottom:0.5px solid var(--bd);padding:0 20px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100}
+.nav-b{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--tx3);text-transform:uppercase;margin-right:16px;white-space:nowrap;flex-shrink:0}
+.nav-tabs{display:flex;flex:1;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-t{padding:0 13px;height:52px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--tx2);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .12s;margin-bottom:-0.5px;flex-shrink:0}
+.nav-t:hover{color:var(--tx)}.nav-t.on{color:var(--tx);border-bottom-color:var(--tx)}
+.nav-r{display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:12px;flex-shrink:0}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--acl);color:var(--act);flex-shrink:0}
+.mc{flex:1;padding:24px 20px 56px;max-width:900px;margin:0 auto;width:100%}
+.tp{display:none}.tp.on{display:block}
+.sec{font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--tx3);text-transform:uppercase;margin:20px 0 10px}.sec:first-child{margin-top:0}
+/* stats */
+.sr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.st{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--r);padding:14px 12px;text-align:center}
+.sn{font-size:22px;font-weight:700}.sl{font-size:11px;color:var(--tx2);margin-top:2px}
+/* stage cards */
+.sc{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.sh2{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;transition:background .1s}
+.sh2:hover{background:var(--sf2)}
+.bdg{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.stl{font-size:13px;font-weight:600;flex:1}
+.stc{font-size:12px;color:var(--tx2);flex-shrink:0}
+.chv{font-size:10px;color:var(--tx3);transition:transform .2s;flex-shrink:0}.chv.op{transform:rotate(180deg)}
+.pw{padding:0 16px 10px}
+.pt{background:var(--sf3);border-radius:4px;height:4px;overflow:hidden}
+.pf{height:100%;border-radius:4px;transition:width .4s ease}
+.sb{display:none;border-top:0.5px solid var(--bd);padding:10px 16px 14px}.sb.op{display:block}
+/* checklist rows */
+.cr{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--bd)}
+.cr:last-child{border-bottom:none}
+.cr input[type=checkbox]{width:15px;height:15px;margin-top:3px;flex-shrink:0;cursor:pointer;accent-color:var(--ac)}
+.cm{flex:1;min-width:0}
+.cl{font-size:13px;line-height:1.45;cursor:pointer;display:block}
+.cl.dn{text-decoration:line-through;color:var(--tx3)}
+.cme{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px;align-items:center}
+.dd{font-size:11px;color:var(--ac);font-weight:600}
+.pill{font-size:11px;padding:1px 7px;border-radius:20px;font-weight:500}
+.cmt{font-size:12px;color:var(--tx2);font-style:italic;margin-top:4px;padding:5px 8px;background:var(--sf2);border-radius:5px;border-left:2px solid var(--bd2)}
+.mb{font-size:11px;padding:2px 8px;border-radius:20px;border:0.5px solid var(--bd2);background:transparent;color:var(--tx2);cursor:pointer;font-family:inherit;transition:background .1s}
+.mb:hover{background:var(--sf2);color:var(--tx)}
+.ciw{display:none;gap:6px;margin-top:6px}.ciw.op{display:flex}
+.ciw input{flex:1;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit}
+.ciw input:focus{border-color:var(--ac)}
+/* comment area */
+.ca{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:16px;margin-top:12px}
+.ca h3{font-size:13px;font-weight:600;margin-bottom:8px}
+.ca textarea{width:100%;padding:10px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--sf);color:var(--tx);resize:vertical;min-height:80px;outline:none}
+.ca textarea:focus{border-color:var(--ac)}
+.as{font-size:11px;color:var(--tx3);margin-top:5px}
+/* task rows */
+.tr{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--bd)}
+.tr:last-child{border-bottom:none}
+.tr input[type=checkbox]{width:15px;height:15px;margin-top:3px;flex-shrink:0;accent-color:var(--ac)}
+.tb{flex:1;min-width:0}
+.tt{font-size:13px;line-height:1.45}.tt.dn{text-decoration:line-through;color:var(--tx3)}
+.tps{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.pi-a{background:var(--bll);color:var(--bl)}.pi-t{background:var(--sf2);color:var(--tx2)}
+.pi-s{background:var(--sf3);color:var(--tx2)}.pi-ok{background:var(--sf2);color:var(--tx2)}
+.pi-w{background:var(--aml);color:var(--am)}.pi-ov{background:var(--rdl);color:var(--rd)}
+.td{font-size:12px;color:var(--tx2);margin-top:4px;line-height:1.5}
+.nd{text-align:center;padding:32px;color:var(--tx3);font-size:13px}
+/* task form */
+.tf{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:18px;margin-bottom:16px}
+.tfg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.tfg .field{margin-bottom:0}
+/* shift */
+.sday{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.sdh{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;transition:background .1s}
+.sdh:hover{background:var(--sf2)}
+.sdate{font-size:13px;font-weight:600}.stot{font-size:12px;color:var(--tx2);margin-left:auto}
+.sdb{display:none;border-top:0.5px solid var(--bd);padding:10px 16px 14px}.sdb.op{display:block}
+.ss{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--bd)}
+.ss:last-child{border-bottom:none}
+.stm{font-size:12px;font-weight:600;min-width:110px;color:var(--tx)}.sw{font-size:13px;flex:1}
+.sdur{font-size:11px;color:var(--tx2);background:var(--sf2);padding:2px 8px;border-radius:20px}
+.sa{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:flex-end}
+.sa input[type=time],.sa input[type=text]{padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit}
+.sa input[type=time]{width:100px}.sa input[type=text]{flex:1;min-width:120px}
+.sa input:focus{border-color:var(--ac)}
+/* graph */
+.cc{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:20px;margin-bottom:14px}
+.ctt{font-size:13px;font-weight:600;margin-bottom:14px}
+.bc{display:flex;flex-direction:column;gap:8px}
+.brw{display:flex;align-items:center;gap:10px}
+.bl2{font-size:12px;color:var(--tx2);min-width:80px;text-align:right;flex-shrink:0}
+.bt2{flex:1;background:var(--sf2);border-radius:4px;height:20px;overflow:hidden}
+.bf2{height:100%;border-radius:4px;transition:width .5s ease;display:flex;align-items:center}
+.bi{font-size:11px;font-weight:600;color:#fff;padding-left:8px;white-space:nowrap}
+.bo{font-size:11px;color:var(--tx2);flex-shrink:0;min-width:36px}
+.bsb{font-size:11px;color:var(--tx2);flex-shrink:0;min-width:36px}
+/* member tabs */
+.mts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.mt{padding:6px 14px;border-radius:20px;border:0.5px solid var(--bd2);font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--tx2);font-family:inherit;transition:all .12s}
+.mt.on{background:var(--tx);color:var(--sf);border-color:transparent}
+/* resource */
+.rc{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:16px;margin-bottom:12px}
+.rt{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.rav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:var(--acl);color:var(--act);flex-shrink:0}
+.ri{flex:1}.rn{font-size:14px;font-weight:600}.rs{font-size:12px;color:var(--tx2);margin-top:1px}
+.rh{text-align:right}.rb{font-size:22px;font-weight:700}.rm{font-size:11px;color:var(--tx2)}
+.wg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wc{text-align:center;padding:6px 2px;border-radius:var(--r);background:var(--sf2)}
+.wd{font-size:10px;color:var(--tx3);margin-bottom:2px}.wh{font-size:12px;font-weight:600}
+.hh{color:var(--rd)}.hm{color:var(--am)}.hl{color:var(--ac)}.hz{color:var(--tx3)}
+.sl2{margin-top:10px;border-top:0.5px solid var(--bd);padding-top:8px}
+.slr{display:flex;gap:8px;font-size:12px;padding:3px 0;border-bottom:0.5px solid var(--bd)}
+.slr:last-child{border-bottom:none}
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.38);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-bg.on{display:flex}
+.modal{background:var(--sf);border-radius:var(--rx);padding:24px;width:100%;max-width:440px;border:0.5px solid var(--bd2);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:15px;font-weight:600;margin-bottom:14px}
+.modal-foot{display:flex;gap:8px;margin-top:16px}
+/* stage item admin row */
+.si-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--bd)}
+.si-row:last-child{border-bottom:none}
+.si-name{flex:1;font-size:13px}
+.si-det{font-size:11px;color:var(--tx2);font-style:italic;margin-top:2px}
+@media(max-width:600px){.mc{padding:14px 12px 48px}.tfg{grid-template-columns:1fr}.wg{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pg-login">
+<div class="lp"><div class="lb">
+  <div class="brand">進捗・業務管理マスター</div>
+  <h1>ログイン</h1>
+  <p class="lsub">担当者を選んでパスワードを入力</p>
+  <div class="field"><label>担当者</label>
+    <select id="lw">
+      <option value="">選択してください</option>
+      <option value="m0">メンバー A（田中）</option>
+      <option value="m1">メンバー B（鈴木）</option>
+      <option value="m2">メンバー C（佐藤）</option>
+      <option value="admin">管理者</option>
+    </select>
+  </div>
+  <div class="field"><label>パスワード</label><input type="password" id="lpw" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')login()"></div>
+  <div class="err" id="lerr"></div>
+  <button class="btn btn-p" style="width:100%" onclick="login()">ログイン</button>
+
+</div></div>
+</div>
+
+<!-- NAME MODAL -->
+<div class="modal-bg" id="nm-modal">
+  <div class="modal">
+    <h2>表示名を設定</h2>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:14px">ナビゲーションに表示される名前を設定します</p>
+    <div class="field"><label>お名前</label><input type="text" id="nm-input" placeholder="例: 田中みほ" maxlength="20" onkeydown="if(event.key==='Enter')saveNm()"></div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveNm()" style="flex:1">保存</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('nm-modal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE ITEM EDIT MODAL (Admin) -->
+<div class="modal-bg" id="si-modal">
+  <div class="modal">
+    <h2 id="si-modal-title">ステージ項目を編集</h2>
+    <div class="field"><label>項目名</label><input type="text" id="si-name" placeholder="例：マイナビの管理画面を把握した"></div>
+    <div class="field"><label>詳細・説明（任意）</label><textarea id="si-desc" placeholder="具体的なゴールや補足説明…"></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveSI()" style="flex:1">保存</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('si-modal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBER ADD MODAL -->
+<div class="modal-bg" id="mb-modal">
+  <div class="modal">
+    <h2 id="mb-modal-title">メンバーを追加</h2>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:14px">追加したメンバーはすぐにログインできます</p>
+    <div class="field"><label>表示名</label><input type="text" id="mb-name" placeholder="例：山田花子" maxlength="20"></div>
+    <div class="field"><label>パスワード</label><input type="text" id="mb-pw" placeholder="例：yamada2024" maxlength="30" autocomplete="off"></div>
+    <div class="err" id="mb-err"></div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveMember()" style="flex:1">保存</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('mb-modal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERDUE ALERT BANNER -->
+<div id="overdue-banner" style="display:none;position:fixed;top:52px;left:0;right:0;z-index:90;background:var(--rd);color:#fff;padding:10px 16px;font-size:13px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.15)">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:10px">
+    <span style="font-size:16px;flex-shrink:0">⚠️</span>
+    <span id="overdue-text" style="flex:1"></span>
+    <button onclick="document.getElementById('overdue-banner').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;font-family:inherit">閉じる</button>
+  </div>
+</div>
+
+<!-- MEMBER APP -->
+<div id="pg-member" class="app">
+<nav class="nav">
+  <span class="nav-b">進捗・業務管理</span>
+  <div class="nav-tabs" id="m-tabs">
+    <div class="nav-t on" data-p="t-m-prog">進捗</div>
+    <div class="nav-t" data-p="t-m-daily">日次タスク</div>
+    <div class="nav-t" data-p="t-m-shift">シフト</div>
+  </div>
+  <div class="nav-r">
+    <div style="display:flex;align-items:center;gap:5px;cursor:pointer" onclick="openNmModal()" title="名前を変更">
+      <div class="av" id="m-av">田</div>
+      <span id="m-navname" style="font-size:12px;font-weight:600;color:var(--tx2);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <span style="font-size:10px;color:var(--tx3)">✎</span>
+    </div>
+    <button class="btn btn-sm btn-g" onclick="logout()">ログアウト</button>
+  </div>
+</nav>
+<div class="mc">
+  <div class="tp on" id="t-m-prog">
+    <div class="sr" id="m-st"></div>
+    <div id="m-sg"></div>
+    <div class="ca"><h3>コメント・相談メモ</h3><textarea id="m-cmt" placeholder="困っていること、気になること…" oninput="saveCom()"></textarea><p class="as" id="m-ind">自動保存されます</p></div>
+  </div>
+  <div class="tp" id="t-m-daily"><div class="sec">今日のタスク</div><div id="m-dl"></div></div>
+  <div class="tp" id="t-m-shift">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <button class="btn btn-xs btn-g" onclick="shiftMonthStep(-1)">◀</button>
+      <span id="m-shift-month-label" style="font-size:14px;font-weight:600;min-width:80px;text-align:center"></span>
+      <button class="btn btn-xs btn-g" onclick="shiftMonthStep(1)">▶</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-sm btn-g" onclick="downloadShiftCSV()" title="この月のシフトをCSVでダウンロード">📥 CSV出力</button>
+      <button class="btn btn-sm" onclick="addDay()">＋ 日付を追加</button>
+    </div>
+    <div id="m-shift-summary" style="margin-bottom:12px"></div>
+    <div id="m-sl"></div>
+  </div>
+</div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="pg-admin" class="app">
+<nav class="nav">
+  <span class="nav-b">管理者</span>
+  <div class="nav-tabs" id="a-tabs">
+    <div class="nav-t on" data-p="t-a-prog">進捗管理</div>
+    <div class="nav-t" data-p="t-a-tasks">タスク管理</div>
+    <div class="nav-t" data-p="t-a-stg">ステージ編集</div>
+    <div class="nav-t" data-p="t-a-remain">残タスク</div>
+    <div class="nav-t" data-p="t-a-coaching">育成分析</div>
+    <div class="nav-t" data-p="t-a-res">リソース</div>
+    <div class="nav-t" data-p="t-a-monthly">月間レポート</div>
+    <div class="nav-t" data-p="t-a-company">会社管理</div>
+    <div class="nav-t" data-p="t-a-members">メンバー管理</div>
+    <div class="nav-t" data-p="t-a-data">データ管理</div>
+  </div>
+  <div class="nav-r"><button class="btn btn-sm btn-g" onclick="logout()">ログアウト</button></div>
+</nav>
+<div class="mc">
+  <div class="tp on" id="t-a-prog">
+    <div class="mts" id="a-pm"></div>
+    <div class="sr" id="a-st"></div>
+    <div id="a-sg"></div>
+    <div id="a-cv"></div>
+  </div>
+  <div class="tp" id="t-a-tasks">
+    <!-- mode switcher -->
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="mt on" id="tm-single" onclick="switchTaskMode('single')">1件追加</button>
+      <button class="mt" id="tm-bulk" onclick="switchTaskMode('bulk')">まとめて追加</button>
+      <button class="mt" id="tm-tmpl" onclick="switchTaskMode('tmpl')">テンプレート</button>
+    </div>
+
+    <!-- single add -->
+    <div id="task-mode-single">
+      <div class="tf">
+        <div class="tfg">
+          <div class="field"><label>タスクタイトル</label><input type="text" id="nt-ti" placeholder="例：スカウト文を10件送る"></div>
+          <div class="field"><label>担当メンバー</label>
+            <select id="nt-me"><option value="all">全員共通</option><option value="m0">メンバー A（田中）</option><option value="m1">メンバー B（鈴木）</option><option value="m2">メンバー C（佐藤）</option></select>
+          </div>
+          <div class="field"><label>種別</label><select id="nt-ty"><option value="daily">日次タスク</option><option value="milestone">マイルストーン</option></select></div>
+          <div class="field"><label>納期（期限）</label><input type="date" id="nt-dl"></div>
+          <div class="field"><label>関連ステージ</label>
+            <select id="nt-st"><option value="">なし</option><option value="ステージ1">ステージ1</option><option value="ステージ2">ステージ2</option><option value="ステージ3">ステージ3</option><option value="ステージ4">ステージ4</option></select>
+          </div>
+          <div class="field"><label>会社</label>
+            <select id="nt-co-sel" onchange="document.getElementById('nt-co').value=this.value" style="margin-bottom:4px"><option value="">選択…</option></select>
+            <input type="text" id="nt-co" placeholder="直接入力もOK（例：株式会社〇〇）">
+          </div>
+          <div class="field" style="grid-column:1/-1"><label>詳細・説明</label><textarea id="nt-de" placeholder="タスクの詳細や期待する成果物…"></textarea></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-p btn-sm" onclick="addTask()">タスクを追加</button>
+          <button class="btn btn-sm" onclick="saveAsTemplate()" title="現在の内容をテンプレートとして保存">⭐ テンプレートに保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- bulk add -->
+    <div id="task-mode-bulk" style="display:none">
+      <div class="tf">
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:12px">1行1タスクで入力。まとめて同じ設定で一気に追加できます。</p>
+        <div class="field"><label>タスク一覧（1行1件）</label>
+          <textarea id="bulk-titles" placeholder="日程調整メールを送る&#10;リマインドメールを送る&#10;候補者の評価シートを記入する" style="min-height:120px"></textarea>
+        </div>
+        <div class="tfg">
+          <div class="field"><label>担当メンバー</label>
+            <select id="bulk-me"><option value="all">全員共通</option><option value="m0">メンバー A（田中）</option><option value="m1">メンバー B（鈴木）</option><option value="m2">メンバー C（佐藤）</option></select>
+          </div>
+          <div class="field"><label>種別</label><select id="bulk-ty"><option value="daily">日次タスク</option><option value="milestone">マイルストーン</option></select></div>
+          <div class="field"><label>納期（期限）</label><input type="date" id="bulk-dl"></div>
+          <div class="field"><label>関連ステージ</label>
+            <select id="bulk-st"><option value="">なし</option><option value="ステージ1">ステージ1</option><option value="ステージ2">ステージ2</option><option value="ステージ3">ステージ3</option><option value="ステージ4">ステージ4</option></select>
+          </div>
+          <div class="field"><label>会社</label>
+            <select id="bulk-co-sel" onchange="document.getElementById('bulk-co').value=this.value" style="margin-bottom:4px"><option value="">選択…</option></select>
+            <input type="text" id="bulk-co" placeholder="直接入力もOK（例：株式会社〇〇）">
+          </div>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="addBulkTasks()">まとめて追加</button>
+        <span id="bulk-result" style="font-size:12px;color:var(--ac);margin-left:10px"></span>
+      </div>
+    </div>
+
+    <!-- template mode -->
+    <div id="task-mode-tmpl" style="display:none">
+      <p style="font-size:13px;color:var(--tx2);margin-bottom:12px">よく使うタスクをテンプレートから素早く追加できます。</p>
+      <div id="tmpl-list"></div>
+    </div>
+
+    <div class="sec">登録済みタスク</div>
+    <div class="mts" id="a-tm"></div>
+    <div id="a-tl"></div>
+  </div>
+  <div class="tp" id="t-a-stg">
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:16px">各ステージの項目を追加・編集・削除できます。メンバーのチェックリストに即時反映されます。</p>
+    <div class="mts" id="a-sm"></div>
+    <div id="a-sl"></div>
+  </div>
+  <div class="tp" id="t-a-remain"><div id="a-remain-content"></div></div>
+  <div class="tp" id="t-a-coaching">
+    <div class="mts" id="a-coach-mtabs"></div>
+    <div id="a-coach-content"></div>
+  </div>
+  <div class="tp" id="t-a-res"><div id="a-rc"></div></div>
+  <div class="tp" id="t-a-monthly">
+    <div class="mts" id="a-mo-mtabs"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <button class="btn btn-xs btn-g" onclick="adminMonthStep(-1)">◀</button>
+      <span id="a-mo-label" style="font-size:14px;font-weight:600;min-width:80px;text-align:center"></span>
+      <button class="btn btn-xs btn-g" onclick="adminMonthStep(1)">▶</button>
+    </div>
+    <div id="a-mo-content"></div>
+  </div>
+  <div class="tp" id="t-a-company">
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:16px">会社マスタを管理します。メンバーのシフト・タスクで選択できるようになります。</p>
+    <div class="tf" style="display:flex;gap:8px;align-items:flex-end;padding:14px 16px">
+      <div class="field" style="flex:1;margin:0"><label>会社名</label><input type="text" id="co-name" placeholder="例：株式会社〇〇" onkeydown="if(event.key==='Enter')addCompany()"></div>
+      <button class="btn btn-p btn-sm" onclick="addCompany()" style="flex-shrink:0">追加</button>
+    </div>
+    <div id="a-co-list"></div>
+  </div>
+  <div class="tp" id="t-a-members">
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:16px">メンバーの追加・パスワード変更・削除ができます。</p>
+    <button class="btn btn-ac btn-sm" onclick="openAddMember()" style="margin-bottom:16px">＋ メンバーを追加</button>
+    <div id="a-mb-list"></div>
+  </div>
+  <div class="tp" id="t-a-data">
+    <div style="max-width:520px;margin:0 auto">
+      <div class="sec" style="margin-top:0">データのバックアップ</div>
+      <div class="tf" style="margin-bottom:20px">
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px">全メンバーのシフト・チェック・タスク・設定をまるごとファイルに保存します。<br>アプリを更新するときは必ずこれを先にやってください。</p>
+        <button class="btn btn-p" onclick="exportData()" style="display:flex;align-items:center;gap:8px;width:100%;justify-content:center">
+          <span style="font-size:16px">💾</span> データを保存する（バックアップ）
+        </button>
+        <p style="font-size:11px;color:var(--tx3);margin-top:10px">→ backup_YYYYMMDD.json というファイルがダウンロードされます</p>
+      </div>
+
+      <div class="sec">データの復元</div>
+      <div class="tf">
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px">保存したバックアップファイルを読み込んでデータを復元します。<br><strong style="color:var(--rd)">⚠️ 現在のデータは上書きされます。</strong>必ずバックアップ後に実行してください。</p>
+        <label style="display:flex;align-items:center;gap:8px;width:100%;justify-content:center;padding:10px 20px;border-radius:var(--r);border:0.5px solid var(--bd2);background:transparent;color:var(--tx);font-size:13px;font-weight:500;cursor:pointer;transition:all .12s" onmouseover="this.style.background='var(--sf2)'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:16px">📂</span> バックアップファイルを読み込む
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
+        </label>
+        <div id="import-result" style="font-size:12px;margin-top:10px;min-height:18px"></div>
+      </div>
+
+      <div class="sec">現在のデータ概要</div>
+      <div id="data-summary" class="tf" style="font-size:13px;color:var(--tx2);line-height:2"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ===== CONFIG =====
+// Default members (used if no custom members saved)
+const DEFAULT_MB=[
+  {id:'m0',name:'田中',full:'メンバー A（田中）',pw:'member01',init:'田'},
+  {id:'m1',name:'鈴木',full:'メンバー B（鈴木）',pw:'member02',init:'鈴'},
+  {id:'m2',name:'佐藤',full:'メンバー C（佐藤）',pw:'member03',init:'佐'}
+];
+// Dynamic member list - loaded from localStorage or defaults
+let MB=[];
+function loadMembers(){
+  const s=gs();
+  MB=s._members&&s._members.length>0?s._members:JSON.parse(JSON.stringify(DEFAULT_MB));
+}
+function saveMembers(){const s=gs();s._members=MB;ss(s);}
+const APW='admin2024';
+
+// Default stage items (can be overridden by admin edits stored in localStorage)
+const DEF_STG=[
+  {id:'s1',label:'ステージ1',title:'採用実務のマスター',dur:'0〜3ヶ月',badge:'var(--s1b)',bt:'var(--s1t)',bar:'var(--s1r)',
+   tasks:[
+     {t:'会社の採用方針・採用ペルソナを理解した',d:''},
+     {t:'中途採用媒体（求人ボックス・indeed等）の管理画面・機能を把握した',d:''},
+     {t:'新卒採用媒体（マイナビ・キャリタス等）の管理画面・機能を把握した',d:''},
+     {t:'採用ATS（応募者管理システム）の基本操作ができる',d:''},
+     {t:'スカウト文章のテンプレートを3パターン作成した',d:''},
+     {t:'スカウトを単独で10件以上送付できた',d:''},
+     {t:'候補者の日程調整メールを単独で送れる',d:''},
+     {t:'リマインドメール・辞退対応メールを送れる',d:''},
+     {t:'面接会場の予約・準備を単独でできる',d:''},
+     {t:'先輩の面接を5件以上同席・観察した',d:''},
+     {t:'採用フロー全体（ES〜内定）を説明できる',d:''},
+     {t:'単独で採用業務を一気通貫で完遂できた（1件）',d:''}
+   ]},
+  {id:'s2',label:'ステージ2',title:'選考品質の向上',dur:'4〜6ヶ月',badge:'var(--s2b)',bt:'var(--s2t)',bar:'var(--s2r)',
+   tasks:[
+     {t:'面接を月10件以上単独担当した',d:''},
+     {t:'候補者評価シートを作成・活用できる',d:''},
+     {t:'合否判断の根拠を言語化できる',d:''},
+     {t:'合否振り返りを毎週記録している',d:''},
+     {t:'採用ペルソナを自分の言葉で説明できる',d:''},
+     {t:'他社新卒採用事例を3社リサーチした',d:''},
+     {t:'面接評価が採用責任者と概ね一致した',d:''}
+   ]},
+  {id:'s3',label:'ステージ3',title:'後輩指導・チーム貢献',dur:'7〜9ヶ月',badge:'var(--s3b)',bt:'var(--s3t)',bar:'var(--s3r)',
+   tasks:[
+     {t:'自分の業務フローをドキュメント化した',d:''},
+     {t:'後輩のスカウト文を週1回レビューできる',d:''},
+     {t:'月次採用報告を作成・発表した',d:''},
+     {t:'改善提案を1件以上提出した',d:''},
+     {t:'後輩が単独完遂できるまで育成した',d:''}
+   ]},
+  {id:'s4',label:'ステージ4',title:'PLとしての戦略立案',dur:'10〜12ヶ月',badge:'var(--s4b)',bt:'var(--s4t)',bar:'var(--s4r)',
+   tasks:[
+     {t:'次年度採用計画を自分で作成した',d:''},
+     {t:'面接官向けトレーニング資料を作成した',d:''},
+     {t:'採用ブランド改善提案を発表した',d:''},
+     {t:'1ポジションの採用をPLとして担当した',d:''},
+     {t:'採用全体をPLとして完走できた',d:''}
+   ]}
+];
+
+// ===== STATE =====
+let CUR=null, aPM='m0', aTM='all', aSM='s1', aCoachMid='m0';
+let aMoMid='m0';
+// shift month state: {member: {year,month}}
+const shiftMonthState={};
+let adminMonthState={year:new Date().getFullYear(),month:new Date().getMonth()+1};
+
+function getCompanies(){const ad=gad();return ad.companies||[];}
+function saveCompanies(list){const ad=gad();ad.companies=list;sad(ad);}
+function coOptions(selId){
+  // kept for backwards compat - now handled by refreshAllCoSelects
+  const sel=document.getElementById(selId);if(!sel)return;
+  const cos=getCompanies();
+  const cur=sel.value;
+  sel.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(cur)sel.value=cur;
+}
+function refreshAllCoSelects(){
+  // refresh all *-co-sel dropdowns (task forms + shift forms)
+  const cos=getCompanies();
+  document.querySelectorAll('[id$="-co-sel"]').forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(cur)sel.value=cur;
+  });
+}
+let siEditStage=null, siEditIdx=null; // for stage item modal
+
+// ===== STORAGE =====
+function gs(){try{return JSON.parse(localStorage.getItem('pjm5')||'{}')}catch{return{}}}
+function ss(s){try{localStorage.setItem('pjm5',JSON.stringify(s))}catch{}}
+function gmd(m){const s=gs();s[m]=s[m]||{};return s[m]}
+function smd(m,d){const s=gs();s[m]=d;ss(s)}
+function gad(){const s=gs();s._a=s._a||{};return s._a}
+function sad(d){const s=gs();s._a=d;ss(s)}
+
+// Get stages (admin-edited version takes precedence)
+function getStages(){
+  const ad=gad();
+  if(ad.stages&&ad.stages.length) return ad.stages;
+  return JSON.parse(JSON.stringify(DEF_STG));
+}
+function saveStages(stgs){const ad=gad();ad.stages=stgs;sad(ad);}
+
+// ===== AUTH =====
+function login(){
+  const w=document.getElementById('lw').value,pw=document.getElementById('lpw').value;
+  const e=document.getElementById('lerr');
+  if(!w){e.textContent='担当者を選択してください';return}
+  if(w==='admin'){if(pw!==APW){e.textContent='パスワードが違います';return}CUR={t:'admin'};pg('pg-admin');initAdmin();}
+  else{const m=MB.find(x=>x.id===w);if(!m||pw!==m.pw){e.textContent='パスワードが違います';return}CUR={t:'member',mid:w};pg('pg-member');initMember(w);}
+  e.textContent='';
+}
+function logout(){CUR=null;document.getElementById('lpw').value='';document.getElementById('lerr').textContent='';pg('pg-login')}
+function pg(id){
+  ['pg-login','pg-member','pg-admin'].forEach(p=>{
+    const el=document.getElementById(p);if(!el)return;
+    if(p==='pg-login'){el.style.display=p===id?'block':'none';}
+    else{if(p===id){el.style.display='';el.classList.add('on');}else{el.style.display='none';el.classList.remove('on');}}
+  });
+}
+
+// ===== TABS =====
+function initTabs(cid,appId){
+  const c=document.getElementById(cid);if(!c)return;
+  c.querySelectorAll('.nav-t').forEach(t=>{
+    t.addEventListener('click',()=>{
+      c.querySelectorAll('.nav-t').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+      document.getElementById(appId).querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
+      const pn=document.getElementById(t.dataset.p);if(pn)pn.classList.add('on');
+      onSw(t.dataset.p);
+    });
+  });
+}
+function onSw(pid){
+  if(pid==='t-m-daily'&&CUR?.mid)renderDaily(CUR.mid);
+  if(pid==='t-m-shift'&&CUR?.mid)renderShift(CUR.mid);
+  if(pid==='t-a-res')renderRes();
+  if(pid==='t-a-tasks')renderTasks();
+  if(pid==='t-a-stg')renderStgEdit();
+  if(pid==='t-a-members'){renderMemberList();}
+  if(pid==='t-a-monthly'){renderAdminMonthly();}
+  if(pid==='t-a-company'){renderCompanyList();refreshAllCoSelects();}
+  if(pid==='t-a-data'){renderDataSummary();}
+  if(pid==='t-a-remain'){renderRemain();}
+  if(pid==='t-a-coaching'){renderCoaching();}
+}
+function setMT(el,cid){document.getElementById(cid)?.querySelectorAll('.mt').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+
+// ===== MODALS =====
+function closeModal(id){document.getElementById(id)?.classList.remove('on')}
+function openModal(id){document.getElementById(id)?.classList.add('on')}
+
+// ===== NAME =====
+function getDN(mid){const d=gmd(mid);return d.displayName||getActiveMB().find(x=>x.id===mid)?.name||mid;}
+function getActiveMB(){return MB;}
+function updateNavName(mid){
+  const nm=getDN(mid);
+  const el=document.getElementById('m-navname');if(el)el.textContent=nm;
+  const av=document.getElementById('m-av');if(av)av.textContent=nm.charAt(0)||'?';
+}
+function openNmModal(){
+  const mid=CUR?.mid;if(!mid)return;
+  document.getElementById('nm-input').value=getDN(mid);
+  openModal('nm-modal');
+  setTimeout(()=>document.getElementById('nm-input')?.focus(),50);
+}
+function saveNm(){
+  const mid=CUR?.mid;if(!mid)return;
+  const val=document.getElementById('nm-input')?.value?.trim();
+  if(!val){alert('名前を入力してください');return;}
+  const d=gmd(mid);d.displayName=val;smd(mid,d);
+  updateNavName(mid);
+  closeModal('nm-modal');
+  // re-render everything that shows the member's name
+  renderProg(mid);
+}
+
+// ===== MEMBER =====
+function initMember(mid){
+  initTabs('m-tabs','pg-member');
+  updateNavName(mid);
+  refreshAllCoSelects();
+  renderProg(mid);renderDaily(mid);renderShift(mid);
+  checkOverdue(mid);
+}
+
+function renderProg(mid){
+  const STG=getStages();
+  const data=gmd(mid),chk=data.checked||{};
+  let tot=0,dn=0;STG.forEach(s=>{tot+=s.tasks.length;s.tasks.forEach((_,i)=>{if(chk[s.id+':'+i]===true)dn++;});});
+  const pct=tot>0?Math.round(dn/tot*100):0,phd=STG.filter(s=>s.tasks.every((_,i)=>chk[s.id+':'+i]===true)).length;
+  document.getElementById('m-st').innerHTML=sh(pct+'%','全体進捗')+sh(dn+'/'+tot,'タスク完了')+sh(phd+'/'+STG.length,'ステージ完了');
+  let html='';
+  STG.forEach((s,si)=>{
+    const{d,t,p}=sp(s,chk),open=si===0;
+    html+=`<div class="sc">
+      <div class="sh2" onclick="tog('sb-${mid}-${s.id}','sc-${mid}-${s.id}')">
+        <span class="bdg" style="background:${s.badge};color:${s.bt}">${s.label}</span>
+        <span class="stl">${s.title}</span>
+        <span class="stc" id="sc2-${mid}-${s.id}">${d}/${t}</span>
+        <span class="chv ${open?'op':''}" id="sc-${mid}-${s.id}">▼</span>
+      </div>
+      <div class="pw"><div class="pt"><div class="pf" id="sb2-${mid}-${s.id}" style="width:${p}%;background:${s.bar}"></div></div></div>
+      <div class="sb ${open?'op':''}" id="sb-${mid}-${s.id}">
+        ${s.tasks.map((tk,i)=>{
+          const key=s.id+':'+i,done=chk[key],at=(data.doneAt||{})[key]||'',cmt=(data.cmt||{})[key]||'';
+          return `<div class="cr">
+            <input type="checkbox" id="ck-${mid}-${key}" ${done?'checked':''} onchange="chk2('${mid}','${s.id}',${i},this.checked)">
+            <div class="cm">
+              <label class="cl ${done?'dn':''}" for="ck-${mid}-${key}">${esc(tk.t)}</label>
+              <div class="cme">${done&&at?`<span class="dd">完了: ${at}</span>`:''}</div>
+              ${tk.d?`<div class="td">${esc(tk.d)}</div>`:''}
+              <div id="cmt2-${mid}-${key}" class="cmt" style="${cmt?'':'display:none'}">${esc(cmt)}</div>
+              <div style="margin-top:4px"><button class="mb" onclick="togCI('${mid}','${key}')">メモ</button></div>
+              <div class="ciw" id="ci-${mid}-${key}">
+                <input type="text" placeholder="メモ…" value="${esc(cmt)}" onkeydown="if(event.key==='Enter')sCmt('${mid}','${key}',this.value)">
+                <button class="mb" onclick="sCmt('${mid}','${key}',this.previousElementSibling.value)">保存</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('m-sg').innerHTML=html;
+  document.getElementById('m-cmt').value=data.comment||'';
+}
+
+function chk2(mid,sid,idx,val){
+  // 1. save to storage
+  const data=gmd(mid);
+  data.checked=data.checked||{};
+  data.doneAt=data.doneAt||{};
+  const key=sid+':'+idx;
+  if(val){ data.checked[key]=true; data.doneAt[key]=new Date().toLocaleDateString('ja-JP'); }
+  else{ delete data.checked[key]; delete data.doneAt[key]; }
+  smd(mid,data);
+
+  // 2. re-render entire progress view (guarantees all numbers update)
+  renderProg(mid);
+
+  // 3. if admin is viewing this member, refresh their view too
+  if(CUR&&CUR.t==='admin'&&aPM===mid) renderAProg();
+}
+function togCI(mid,key){document.getElementById(`ci-${mid}-${key}`)?.classList.toggle('op')}
+function sCmt(mid,key,val){
+  const d=gmd(mid);d.cmt=d.cmt||{};d.cmt[key]=val;smd(mid,d);
+  const el=document.getElementById(`cmt2-${mid}-${key}`);if(el){el.textContent=esc(val);el.style.display=val?'':'none';}
+  document.getElementById(`ci-${mid}-${key}`)?.classList.remove('op');
+}
+function saveCom(){
+  const mid=CUR?.mid;if(!mid)return;
+  const d=gmd(mid);d.comment=document.getElementById('m-cmt').value;d.commentTime=new Date().toLocaleString('ja-JP');smd(mid,d);
+  const i=document.getElementById('m-ind');if(i){i.textContent='保存しました';setTimeout(()=>i.textContent='自動保存されます',1500);}
+}
+
+// ===== DAILY TASKS =====
+function renderDaily(mid){
+  const el=document.getElementById('m-dl');if(!el)return;
+  const ad=gad(),today=td();
+  const allTasks=(ad.tasks||[]).filter(t=>t.member===mid||t.member==='all');
+  const activeTasks=allTasks.filter(t=>!t.deadline||t.deadline>=today);
+  const overdueTasks=allTasks.filter(t=>t.deadline&&t.deadline<today);
+  if(!allTasks.length){el.innerHTML='<div class="nd">管理者からタスクが割り当てられていません</div>';return;}
+  const data=gmd(mid),done=data.dailyDone||{};
+  let html='';
+  // overdue section
+  if(overdueTasks.length){
+    html+=`<div style="background:var(--rdl);border:1px solid rgba(190,58,58,.3);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--rd);margin-bottom:8px">⚠️ 期限切れのタスク（${overdueTasks.length}件）</div>`;
+    overdueTasks.forEach(t=>{const key=t.id+':'+today,chk=done[key];
+      html+=`<div class="tr" style="border-color:rgba(190,58,58,.2)"><input type="checkbox" ${chk?'checked':''} onchange="togDT('${mid}','${t.id}',this.checked)">
+        <div class="tb"><div class="tt ${chk?'dn':''}" style="${!chk?'color:var(--rd)':''}">${esc(t.title)}</div>
+        <div class="tps">${dlP(t.deadline)}${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}</div>
+        ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  if(activeTasks.length){
+    html+='<div class="sc"><div class="sb op" style="border-top:none">';
+    activeTasks.forEach(t=>{const key=t.id+':'+today,chk=done[key];
+      html+=`<div class="tr"><input type="checkbox" ${chk?'checked':''} onchange="togDT('${mid}','${t.id}',this.checked)">
+        <div class="tb"><div class="tt ${chk?'dn':''}">${esc(t.title)}</div>
+        <div class="tps">${t.type==='daily'?'<span class="pill pi-t">日次</span>':'<span class="pill pi-t">マイルストーン</span>'}
+          ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}${t.deadline?dlP(t.deadline):''}
+        </div>${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}</div>
+      </div>`;
+    });
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+}
+function togDT(mid,tid,val){const d=gmd(mid);d.dailyDone=d.dailyDone||{};d.dailyDone[tid+':'+td()]=val;smd(mid,d);renderDaily(mid);}
+
+// ===== SHIFT =====
+function renderShift(mid){
+  const el=document.getElementById('m-sl');if(!el)return;
+  const st=getShiftMonth(mid);
+  const lbl=document.getElementById('m-shift-month-label');
+  if(lbl)lbl.textContent=`${st.year}年${st.month}月`;
+  const prefix=`${st.year}-${String(st.month).padStart(2,'0')}`;
+  const data=gmd(mid),shifts=data.shifts||{};
+  const days=Object.keys(shifts).filter(d=>d.startsWith(prefix)).sort().reverse();
+  renderShiftSummary(mid,st.year,st.month);
+  if(!days.length){el.innerHTML='<div class="nd">この月のシフト記録がありません</div>';return;}
+  let html='';
+  days.forEach(day=>{
+    const slots=shifts[day]||[];
+    const tm=slots.reduce((a,s)=>a+calcM(s.start,s.end,s.brk||0),0);
+    const rawTm=slots.reduce((a,s)=>a+calcM(s.start,s.end,0),0);
+    const totalBrk=slots.reduce((a,s)=>a+(s.brk||0),0);
+    html+=`<div class="sday">
+      <div class="sdh" onclick="tog('sd-${day}','sdc-${day}')">
+        <span class="sdate">${fd(day)}</span>
+        <div style="margin-left:auto;text-align:right">
+          <span class="stot">${(tm/60).toFixed(1)}h</span>
+          ${totalBrk?`<span style="font-size:11px;color:var(--tx3);margin-left:6px">休憩 ${totalBrk}分</span>`:''}
+        </div>
+        <span class="chv" id="sdc-${day}">▼</span>
+      </div>
+      <div class="sdb" id="sd-${day}">
+        ${slots.map((sl,i)=>{
+          const netM=calcM(sl.start,sl.end,sl.brk||0);
+          const brkTxt=sl.brk?`<span style="font-size:11px;color:var(--tx3);margin-left:4px">休憩${sl.brk}分</span>`:'';
+          const coTxt=sl.company?`<span style="font-size:11px;color:var(--bl);margin-left:4px">[${esc(sl.company)}]</span>`:'';
+          return `<div class="ss">
+            <span class="stm">${sl.start} 〜 ${sl.end}</span>
+            <span class="sw">${esc(sl.work)}${coTxt}${brkTxt}</span>
+            <span class="sdur">${(netM/60).toFixed(1)}h</span>
+            <button class="btn btn-xs btn-d" onclick="delSl('${mid}','${day}',${i})">削除</button>
+          </div>`;
+        }).join('')}
+        <div class="sa" style="align-items:flex-end;gap:6px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11px;color:var(--tx2)">開始</span>
+            <input type="time" id="si-${day}-s" value="09:00" style="width:100px">
+          </div>
+          <span style="font-size:12px;color:var(--tx2);padding-bottom:8px">〜</span>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11px;color:var(--tx2)">終了</span>
+            <input type="time" id="si-${day}-e" value="18:00" style="width:100px">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11px;color:var(--tx2)">休憩（分）</span>
+            <input type="number" id="si-${day}-b" value="0" min="0" max="480" style="width:70px;padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:100px">
+            <span style="font-size:11px;color:var(--tx2)">業務内容</span>
+            <input type="text" placeholder="例：面接対応" id="si-${day}-w" style="flex:1">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;min-width:110px">
+            <span style="font-size:11px;color:var(--tx2)">会社</span>
+            <select id="si-${day}-co-sel" onchange="syncCoSel('${day}')" style="padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit"><option value="">選択…</option></select>
+            <input type="text" id="si-${day}-co" placeholder="直接入力もOK" style="padding:6px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit;margin-top:2px">
+          </div>
+          <button class="btn btn-sm btn-p" onclick="addSl('${mid}','${day}')" style="align-self:flex-end">追加</button>
+        </div>
+        <div style="margin-top:10px;padding-top:8px;border-top:0.5px solid var(--bd)">
+          <button class="btn btn-xs btn-d" onclick="delDay('${mid}','${day}')">この日付を削除</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+  // populate company selects in each day's form
+  Object.keys(shifts).filter(d=>d.startsWith(prefix)).forEach(day=>{
+    const sel=document.getElementById('si-'+day+'-co-sel');
+    if(sel){const cos=getCompanies();sel.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
+  });
+}
+function syncCoSel(day){
+  const sel=document.getElementById('si-'+day+'-co-sel');
+  const inp=document.getElementById('si-'+day+'-co');
+  if(sel&&inp&&sel.value) inp.value=sel.value;
+}
+function addDay(){
+  const mid=CUR?.mid;if(!mid)return;
+  const day=prompt('日付を入力（例：2024-12-01）',td());if(!day||!/^\d{4}-\d{2}-\d{2}$/.test(day)){if(day)alert('形式が正しくありません（例: 2024-12-01）');return;}
+  const d=gmd(mid);d.shifts=d.shifts||{};if(!d.shifts[day])d.shifts[day]=[];smd(mid,d);renderShift(mid);
+  setTimeout(()=>{const el=document.getElementById('sd-'+day);if(el){el.classList.add('op');document.getElementById('sdc-'+day)?.classList.add('op');}},100);
+}
+function addSl(mid,day){
+  const s=document.getElementById('si-'+day+'-s')?.value;
+  const e=document.getElementById('si-'+day+'-e')?.value;
+  const w=document.getElementById('si-'+day+'-w')?.value?.trim();
+  const b=parseInt(document.getElementById('si-'+day+'-b')?.value||'0',10)||0;
+  const co=document.getElementById('si-'+day+'-co')?.value||'';
+  if(!s||!e||!w){alert('すべて入力してください');return;}
+  const d=gmd(mid);d.shifts=d.shifts||{};d.shifts[day]=d.shifts[day]||[];
+  d.shifts[day].push({start:s,end:e,work:w,brk:b,company:co});
+  smd(mid,d);renderShift(mid);
+}
+function delSl(mid,day,idx){const d=gmd(mid);d.shifts[day].splice(idx,1);smd(mid,d);renderShift(mid);}
+function delDay(mid,day){if(!confirm(`${fd(day)} のシフト記録を削除しますか？`))return;const d=gmd(mid);delete d.shifts[day];smd(mid,d);renderShift(mid);}
+
+// ===== ADMIN =====
+function initAdmin(){
+  loadMembers();
+  initTabs('a-tabs','pg-admin');
+  refreshAdminMemberTabs();
+  if(MB.length>0){aPM=MB[0].id;renderAProg();}
+  renderTasks();
+  document.getElementById('a-sm').innerHTML=getStages().map((s,i)=>`<button class="mt ${i===0?'on':''}" onclick="aSM='${s.id}';renderStgEdit();setMT(this,'a-sm')">${s.label}</button>`).join('');
+  // monthly member tabs
+  const mot=document.getElementById('a-mo-mtabs');
+  if(mot) mot.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aMoMid='${m.id}';renderAdminMonthly();setMT(this,'a-mo-mtabs')">${getDN(m.id)}</button>`).join('');
+  const moLbl=document.getElementById('a-mo-label');
+  if(moLbl) moLbl.textContent=`${adminMonthState.year}年${adminMonthState.month}月`;
+  // init company selects
+  refreshAllCoSelects();
+  // coaching tabs
+  const ct=document.getElementById('a-coach-mtabs');
+  if(ct) ct.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aCoachMid='${m.id}';renderCoaching();setMT(this,'a-coach-mtabs')">${getDN(m.id)}</button>`).join('');
+}
+
+// ===== ADMIN PROGRESS =====
+function renderAProg(){
+  const STG=getStages();
+  const mid=aPM,data=gmd(mid),chk=data.checked||{};
+  let tot=0,dn=0;STG.forEach(s=>{tot+=s.tasks.length;s.tasks.forEach((_,i)=>{if(chk[s.id+':'+i]===true)dn++;});});
+  const pct=tot>0?Math.round(dn/tot*100):0,phd=STG.filter(s=>s.tasks.every((_,i)=>chk[s.id+':'+i]===true)).length;
+  document.getElementById('a-st').innerHTML=sh(pct+'%','全体進捗')+sh(dn+'/'+tot,'タスク完了')+sh(phd+'/'+STG.length,'ステージ完了');
+  let html='';
+  STG.forEach(s=>{
+    const{d,t,p}=sp(s,chk);
+    html+=`<div class="sc">
+      <div class="sh2" onclick="tog('asb-${s.id}','asc-${s.id}')">
+        <span class="bdg" style="background:${s.badge};color:${s.bt}">${s.label}</span>
+        <span class="stl">${s.title}</span>
+        <span style="font-size:12px;color:var(--tx2);margin-right:6px">${s.dur}</span>
+        <span id="asb-cnt-${s.id}" style="font-size:12px;color:var(--tx2);margin-right:6px">${d}/${t}</span>
+        <span id="asb-pct-${s.id}" style="font-size:13px;font-weight:700;color:${p===100?'var(--ac)':'var(--tx)'};margin-right:6px">${p}%</span>
+        <span class="chv" id="asc-${s.id}">▼</span>
+      </div>
+      <div class="pw"><div class="pt"><div class="pf" id="asb-bar-${s.id}" style="width:${p}%;background:${s.bar}"></div></div></div>
+      <div class="sb" id="asb-${s.id}">
+        ${s.tasks.map((tk,i)=>{
+          const ok=chk[s.id+':'+i]===true,at=(data.doneAt||{})[s.id+':'+i]||'',cmt=(data.cmt||{})[s.id+':'+i]||'';
+          return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bd)">
+            <span style="color:${ok?'var(--ac)':'var(--tx3)'};font-size:14px;margin-top:1px;flex-shrink:0">${ok?'✓':'○'}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;${ok?'text-decoration:line-through;color:var(--tx2)':''}">${esc(tk.t)}</div>
+              ${ok&&at?`<div style="font-size:11px;color:var(--ac);font-weight:600;margin-top:2px">📅 完了: ${at}</div>`:'<div style="font-size:11px;color:var(--tx3);margin-top:2px">未完了</div>'}
+              ${cmt?`<div style="font-size:11px;color:var(--tx2);font-style:italic;margin-top:2px">"${esc(cmt)}"</div>`:''}
+            </div>
+          </div>`;}).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('a-sg').innerHTML=html;
+  const mn=MB.find(m=>m.id===mid),mnName=getDN(mid)||mn.name;
+  document.getElementById('a-cv').innerHTML=data.comment
+    ?`<div class="ca"><h3>${mnName}さんのコメント</h3><div style="font-size:13px;color:var(--tx2);white-space:pre-wrap;padding:10px;background:var(--sf2);border-radius:var(--r)">${esc(data.comment)}</div><p class="as">更新: ${data.commentTime||'—'}</p></div>`
+    :`<div class="ca"><h3>コメント</h3><p style="font-size:13px;color:var(--tx3)">まだコメントはありません</p></div>`;
+}
+
+// helper: refresh just the numbers in admin progress view without full re-render
+function refreshAProgStats(mid){
+  const STG=getStages();
+  const data=gmd(mid),chk=data.checked||{};
+
+  // update each stage bar + count
+  STG.forEach(sx=>{
+    const res=sp(sx,chk);
+    const bar=document.getElementById('sb2-a-'+sx.id) || document.getElementById('asb-bar-'+sx.id);
+    const cnt=document.getElementById('asb-cnt-'+sx.id);
+    const pctEl=document.getElementById('asb-pct-'+sx.id);
+    if(bar) bar.style.width=res.p+'%';
+    if(cnt) cnt.textContent=res.d+'/'+res.t;
+    if(pctEl) pctEl.textContent=res.p+'%';
+  });
+
+  // update top stats
+  let tot=0,dn=0;
+  STG.forEach(sx=>{tot+=sx.tasks.length;sx.tasks.forEach((_,i)=>{if(chk[sx.id+':'+i])dn++;});});
+  const pct=tot>0?Math.round(dn/tot*100):0;
+  const phd=STG.filter(sx=>sx.tasks.every((_,i)=>chk[sx.id+':'+i]===true)).length;
+  const stEl=document.getElementById('a-st');
+  if(stEl) stEl.innerHTML=sh(pct+'%','全体進捗')+sh(dn+'/'+tot,'タスク完了')+sh(phd+'/'+STG.length,'ステージ完了');
+}
+
+// ===== ADMIN TASKS =====
+function switchTaskMode(mode){
+  ['single','bulk','tmpl'].forEach(m=>{
+    document.getElementById('task-mode-'+m).style.display=m===mode?'':'none';
+    document.getElementById('tm-'+m).classList.toggle('on',m===mode);
+  });
+  if(mode==='tmpl') renderTemplates();
+}
+
+function addTask(){
+  const title=document.getElementById('nt-ti').value.trim();if(!title){alert('タイトルを入力してください');return;}
+  const ad=gad();ad.tasks=ad.tasks||[];
+  ad.tasks.push({id:'t'+Date.now(),title,member:document.getElementById('nt-me').value,type:document.getElementById('nt-ty').value,deadline:document.getElementById('nt-dl').value,stage:document.getElementById('nt-st').value,company:document.getElementById('nt-co')?.value||'',desc:document.getElementById('nt-de').value.trim(),createdAt:new Date().toLocaleString('ja-JP')});
+  sad(ad);document.getElementById('nt-ti').value='';document.getElementById('nt-dl').value='';document.getElementById('nt-de').value='';renderTasks();
+}
+
+function addBulkTasks(){
+  const raw=document.getElementById('bulk-titles').value;
+  const titles=raw.split('\n').map(s=>s.trim()).filter(s=>s.length>0);
+  if(!titles.length){alert('タスクを1件以上入力してください');return;}
+  const ad=gad();ad.tasks=ad.tasks||[];
+  const member=document.getElementById('bulk-me').value;
+  const type=document.getElementById('bulk-ty').value;
+  const deadline=document.getElementById('bulk-dl').value;
+  const stage=document.getElementById('bulk-st').value;
+  const now=new Date().toLocaleString('ja-JP');
+  titles.forEach((title,i)=>{
+    const bulkCo=document.getElementById('bulk-co')?.value||''; ad.tasks.push({id:'t'+(Date.now()+i),title,member,type,deadline,stage,company:bulkCo,desc:'',createdAt:now});
+  });
+  sad(ad);
+  document.getElementById('bulk-titles').value='';
+  const res=document.getElementById('bulk-result');
+  res.textContent=`${titles.length}件追加しました`;
+  setTimeout(()=>res.textContent='',2500);
+  renderTasks();
+}
+
+// Templates
+function getTemplates(){const ad=gad();return ad.templates||[];}
+function saveAsTemplate(){
+  const title=document.getElementById('nt-ti').value.trim();if(!title){alert('タイトルを入力してください');return;}
+  const tmpl={id:'tp'+Date.now(),title,member:document.getElementById('nt-me').value,type:document.getElementById('nt-ty').value,stage:document.getElementById('nt-st').value,desc:document.getElementById('nt-de').value.trim()};
+  const ad=gad();ad.templates=ad.templates||[];ad.templates.push(tmpl);sad(ad);
+  alert(`「${title}」をテンプレートに保存しました`);
+}
+function useTemplate(id){
+  const tmpl=getTemplates().find(t=>t.id===id);if(!tmpl)return;
+  document.getElementById('nt-ti').value=tmpl.title;
+  document.getElementById('nt-me').value=tmpl.member||'all';
+  document.getElementById('nt-ty').value=tmpl.type||'daily';
+  document.getElementById('nt-st').value=tmpl.stage||'';
+  document.getElementById('nt-de').value=tmpl.desc||'';
+  switchTaskMode('single');
+  document.getElementById('nt-ti')?.focus();
+}
+function delTemplate(id){
+  if(!confirm('このテンプレートを削除しますか？'))return;
+  const ad=gad();ad.templates=(ad.templates||[]).filter(t=>t.id!==id);sad(ad);renderTemplates();
+}
+function renderTemplates(){
+  const el=document.getElementById('tmpl-list');if(!el)return;
+  const tmpls=getTemplates();
+  if(!tmpls.length){el.innerHTML='<div class="nd">まだテンプレートがありません。<br>1件追加タブで入力後「テンプレートに保存」ボタンで登録できます。</div>';return;}
+  let html='<div class="sc"><div class="sb op" style="border-top:none">';
+  tmpls.forEach(t=>{
+    const ml=t.member==='all'?'全員':getDN(t.member)||MB.find(m=>m.id===t.member)?.name||t.member;
+    html+=`<div class="tr"><div class="tb">
+      <div class="tt">${esc(t.title)}</div>
+      <div class="tps"><span class="pill pi-a">${ml}</span><span class="pill pi-t">${t.type==='daily'?'日次':'マイルストーン'}</span>${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}</div>
+      ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
+    </div>
+    <div style="display:flex;gap:4px;flex-shrink:0">
+      <button class="btn btn-xs btn-ac" onclick="useTemplate('${t.id}')">使う</button>
+      <button class="btn btn-xs btn-d" onclick="delTemplate('${t.id}')">削除</button>
+    </div></div>`;
+  });
+  html+='</div></div>';el.innerHTML=html;
+}
+
+function copyTask(id){
+  const ad=gad();const orig=(ad.tasks||[]).find(t=>t.id===id);if(!orig)return;
+  const copy={...orig,id:'t'+Date.now(),title:'【コピー】'+orig.title,createdAt:new Date().toLocaleString('ja-JP')};
+  ad.tasks.push(copy);sad(ad);renderTasks();
+}
+function delTask(id){if(!confirm('このタスクを削除しますか？'))return;const ad=gad();ad.tasks=(ad.tasks||[]).filter(t=>t.id!==id);sad(ad);renderTasks();}
+function renderTasks(){
+  const el=document.getElementById('a-tl');if(!el)return;
+  const ad=gad(),tasks=(ad.tasks||[]).filter(t=>aTM==='all'||t.member===aTM||t.member==='all');
+  if(!tasks.length){el.innerHTML='<div class="nd">タスクはありません</div>';return;}
+  let html='<div class="sc"><div class="sb op" style="border-top:none">';
+  tasks.slice().reverse().forEach(t=>{
+    const ml=t.member==='all'?'全員':getDN(t.member)||MB.find(m=>m.id===t.member)?.name||t.member;
+    html+=`<div class="tr"><div class="tb"><div class="tt">${esc(t.title)}</div>
+      <div class="tps"><span class="pill pi-a">${ml}</span><span class="pill pi-t">${t.type==='daily'?'日次':'マイルストーン'}</span>
+        ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
+        ${t.company?`<span class="pill" style="background:var(--bll);color:var(--bl)">${esc(t.company)}</span>`:''}
+        ${t.deadline?dlP(t.deadline):''}
+      </div>${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
+      <div style="font-size:11px;color:var(--tx3);margin-top:3px">追加: ${t.createdAt}</div>
+    </div>
+    <div style="display:flex;gap:4px;flex-shrink:0">
+      <button class="btn btn-xs" onclick="copyTask('${t.id}')" title="コピーして複製">複製</button>
+      <button class="btn btn-xs btn-d" onclick="delTask('${t.id}')">削除</button>
+    </div></div>`;
+  });
+  html+='</div></div>';el.innerHTML=html;
+}
+
+// ===== STAGE EDIT (Admin) =====
+// drag state
+let dragSrc=null,dragType=null;
+
+function renderStgEdit(){
+  const STG=getStages();
+  const el=document.getElementById('a-sl');if(!el)return;
+
+  // ---- Stage order section ----
+  let html=`<div class="sec" style="margin-top:0">ステージの順番</div>
+  <p style="font-size:12px;color:var(--tx3);margin-bottom:10px">☰ をドラッグして順番を入れ替えられます</p>
+  <div id="stg-order-list" style="margin-bottom:20px">`;
+  STG.forEach((s,i)=>{
+    html+=`<div class="si-row" draggable="true"
+      style="background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--r);margin-bottom:6px;padding:10px 12px;cursor:default"
+      data-stgid="${s.id}"
+      ondragstart="onStageDragStart(event,'${s.id}')"
+      ondragover="onStageDragOver(event)"
+      ondrop="onStageDrop(event,'${s.id}')"
+      ondragend="onDragEnd(event)">
+      <span style="font-size:16px;color:var(--tx3);cursor:grab;margin-right:8px;flex-shrink:0">☰</span>
+      <span class="bdg" style="background:${s.badge};color:${s.bt};margin-right:8px">${s.label}</span>
+      <span style="font-size:13px;font-weight:600;flex:1">${esc(s.title)}</span>
+      <span style="font-size:11px;color:var(--tx3)">${s.dur}</span>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // ---- Items for selected stage ----
+  const s=STG.find(x=>x.id===aSM);
+  if(s){
+    html+=`<div class="sec">${s.label}「${s.title}」の項目</div>
+    <p style="font-size:12px;color:var(--tx3);margin-bottom:10px">☰ をドラッグして項目の順番を変更できます</p>
+    <div id="si-item-list">`;
+    s.tasks.forEach((tk,i)=>{
+      html+=`<div class="si-row" draggable="true"
+        style="background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--r);margin-bottom:6px;padding:10px 12px;cursor:default"
+        data-idx="${i}"
+        ondragstart="onItemDragStart(event,${i})"
+        ondragover="onItemDragOver(event)"
+        ondrop="onItemDrop(event,${i})"
+        ondragend="onDragEnd(event)">
+        <span style="font-size:16px;color:var(--tx3);cursor:grab;margin-right:8px;flex-shrink:0">☰</span>
+        <div style="flex:1;min-width:0">
+          <div class="si-name">${esc(tk.t)}</div>
+          ${tk.d?`<div class="si-det">${esc(tk.d)}</div>`:''}
+        </div>
+        <button class="btn btn-xs" onclick="openSIEdit('${s.id}',${i})" style="flex-shrink:0">編集</button>
+        <button class="btn btn-xs btn-d" onclick="delSI('${s.id}',${i})" style="flex-shrink:0">削除</button>
+      </div>`;
+    });
+    html+=`</div>
+    <button class="btn btn-ac btn-sm" onclick="openSIAdd('${s.id}')" style="margin-top:8px">＋ 項目を追加</button>`;
+  }
+
+  el.innerHTML=html;
+}
+
+// --- Stage order drag ---
+function onStageDragStart(e,stageId){
+  dragSrc=stageId;dragType='stage';
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.target.style.opacity='0.4',0);
+}
+function onStageDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.style.background='var(--acl)';}
+function onStageDrop(e,targetId){
+  e.preventDefault();
+  if(dragType!=='stage'||dragSrc===targetId)return;
+  const STG=getStages();
+  const from=STG.findIndex(x=>x.id===dragSrc),to=STG.findIndex(x=>x.id===targetId);
+  if(from<0||to<0)return;
+  const [moved]=STG.splice(from,1);STG.splice(to,0,moved);
+  saveStages(STG);renderStgEdit();
+  // update stage tabs
+  document.getElementById('a-sm').innerHTML=STG.map((s,i)=>`<button class="mt ${s.id===aSM?'on':''}" onclick="aSM='${s.id}';renderStgEdit();setMT(this,'a-sm')">${s.label}</button>`).join('');
+}
+
+// --- Item order drag ---
+function onItemDragStart(e,idx){
+  dragSrc=idx;dragType='item';
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.target.style.opacity='0.4',0);
+}
+function onItemDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.style.background='var(--acl)';}
+function onItemDrop(e,targetIdx){
+  e.preventDefault();
+  if(dragType!=='item'||dragSrc===targetIdx)return;
+  const STG=getStages();const s=STG.find(x=>x.id===aSM);if(!s)return;
+  const [moved]=s.tasks.splice(dragSrc,1);s.tasks.splice(targetIdx,0,moved);
+  saveStages(STG);renderStgEdit();
+}
+function onDragEnd(e){
+  e.target.style.opacity='';
+  document.querySelectorAll('[data-stgid],[data-idx]').forEach(el=>el.style.background='');
+}
+// open modal for adding new stage item
+function openSIAdd(stageId){
+  siEditStage=stageId;siEditIdx=null;
+  document.getElementById('si-modal-title').textContent='項目を追加';
+  document.getElementById('si-name').value='';document.getElementById('si-desc').value='';
+  openModal('si-modal');setTimeout(()=>document.getElementById('si-name')?.focus(),50);
+}
+// open modal for editing existing stage item
+function openSIEdit(stageId,idx){
+  const STG=getStages();const s=STG.find(x=>x.id===stageId);if(!s)return;
+  siEditStage=stageId;siEditIdx=idx;
+  document.getElementById('si-modal-title').textContent='項目を編集';
+  document.getElementById('si-name').value=s.tasks[idx]?.t||'';
+  document.getElementById('si-desc').value=s.tasks[idx]?.d||'';
+  openModal('si-modal');setTimeout(()=>document.getElementById('si-name')?.focus(),50);
+}
+function saveSI(){
+  const name=document.getElementById('si-name').value.trim();
+  if(!name){alert('項目名を入力してください');return;}
+  const desc=document.getElementById('si-desc').value.trim();
+  const STG=getStages();const s=STG.find(x=>x.id===siEditStage);if(!s)return;
+  if(siEditIdx===null){s.tasks.push({t:name,d:desc});}
+  else{s.tasks[siEditIdx]={t:name,d:desc};}
+  saveStages(STG);closeModal('si-modal');renderStgEdit();
+  // also refresh member view if logged in
+  if(CUR?.mid)renderProg(CUR.mid);
+}
+function delSI(stageId,idx){
+  if(!confirm('この項目を削除しますか？\n※このステージに対するメンバーのチェック状態は保持されます'))return;
+  const STG=getStages();const s=STG.find(x=>x.id===stageId);if(!s)return;
+  s.tasks.splice(idx,1);saveStages(STG);renderStgEdit();
+}
+
+// ===== GRAPH (merged into coaching) =====
+function brw(lbl,pct,color,sub){const p=Math.min(100,Math.max(0,pct));
+  return `<div class="brw"><span class="bl2">${esc(String(lbl))}</span><div class="bt2"><div class="bf2" style="width:${p}%;background:${color}">${p>=22?`<span class="bi">${p}%</span>`:''}</div></div>${p<22?`<span class="bo">${p}%</span>`:''}<span class="bsb">${sub}</span></div>`;}
+
+// ===== RESOURCE =====
+function renderRes(){
+  const STG=getStages();
+  const el=document.getElementById('a-rc');if(!el)return;
+  let html='<div class="sec">メンバーリソース状況</div>';
+  MB.forEach(m=>{
+    const data=gmd(m.id),dispName=getDN(m.id)||m.name,shifts=data.shifts||{},l7=l7d();
+    const wh=l7.map(d=>(shifts[d]||[]).reduce((a,s)=>a+calcM(s.start,s.end,s.brk||0),0)/60);
+    const tot=wh.reduce((a,b)=>a+b,0),avg=(tot/7).toFixed(1);
+    const chk=data.checked||{};let ttl=0,dn=0;STG.forEach(s=>{ttl+=s.tasks.length;s.tasks.forEach((_,i)=>{if(chk[s.id+':'+i]===true)dn++;});});
+    const prog=ttl>0?Math.round(dn/ttl*100):0;
+    const allSl=l7.flatMap(d=>(shifts[d]||[]).map(sl=>({d,sl})));
+    html+=`<div class="rc"><div class="rt">
+      <div class="rav">${dispName.charAt(0)||m.init}</div>
+      <div class="ri"><div class="rn">${dispName}</div><div class="rs">進捗 ${prog}% ／ 週平均 ${avg}h/日</div></div>
+      <div class="rh"><div class="rb">${tot.toFixed(1)}</div><div class="rm">h / 週</div></div>
+    </div>
+    <div class="wg">${l7.map((d,i)=>{const h=wh[i],cls=h>=8?'hh':h>=4?'hm':h>0?'hl':'hz',dow=['日','月','火','水','木','金','土'][new Date(d).getDay()];return `<div class="wc"><div class="wd">${dow}</div><div class="wh ${cls}">${h>0?h.toFixed(1):'—'}</div></div>`;}).join('')}</div>
+    <div class="sl2">${allSl.length?allSl.map(({d,sl})=>`<div class="slr"><span style="min-width:60px;color:var(--tx2)">${fs(d)}</span><span style="min-width:110px;color:var(--tx2)">${sl.start}〜${sl.end}</span><span>${esc(sl.work)}</span><span style="margin-left:auto;color:var(--tx3)">${(calcM(sl.start,sl.end)/60).toFixed(1)}h</span></div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:6px 0">シフト記録なし</div>'}</div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+// ===== MEMBER MANAGEMENT =====
+let mbEditId=null;
+function openAddMember(){
+  mbEditId=null;
+  document.getElementById('mb-modal-title').textContent='メンバーを追加';
+  document.getElementById('mb-name').value='';
+  document.getElementById('mb-pw').value='';
+  document.getElementById('mb-err').textContent='';
+  openModal('mb-modal');
+  setTimeout(()=>document.getElementById('mb-name')?.focus(),50);
+}
+function openEditMember(id){
+  mbEditId=id;
+  const m=MB.find(x=>x.id===id);if(!m)return;
+  document.getElementById('mb-modal-title').textContent='メンバーを編集';
+  document.getElementById('mb-name').value=getDN(id)||m.name;
+  document.getElementById('mb-pw').value=m.pw;
+  document.getElementById('mb-err').textContent='';
+  openModal('mb-modal');
+  setTimeout(()=>document.getElementById('mb-name')?.focus(),50);
+}
+function saveMember(){
+  const name=document.getElementById('mb-name').value.trim();
+  const pw=document.getElementById('mb-pw').value.trim();
+  const errEl=document.getElementById('mb-err');
+  if(!name){errEl.textContent='名前を入力してください';return;}
+  if(!pw||pw.length<4){errEl.textContent='パスワードは4文字以上で入力してください';return;}
+  // check pw conflict with admin
+  if(pw===APW){errEl.textContent='そのパスワードは使用できません';return;}
+  if(mbEditId){
+    // edit existing
+    const m=MB.find(x=>x.id===mbEditId);if(!m)return;
+    // check pw conflict with other members
+    const conflict=MB.find(x=>x.id!==mbEditId&&x.pw===pw);
+    if(conflict){errEl.textContent='そのパスワードは別のメンバーが使用中です';return;}
+    m.pw=pw;m.name=name;m.full=name;m.init=name.charAt(0);
+    // also update displayName in member data
+    const d=gmd(mbEditId);d.displayName=name;smd(mbEditId,d);
+  } else {
+    // add new
+    const conflict=MB.find(x=>x.pw===pw);
+    if(conflict){errEl.textContent='そのパスワードは別のメンバーが使用中です';return;}
+    const newId='m'+Date.now();
+    MB.push({id:newId,name,full:name,pw,init:name.charAt(0)});
+  }
+  saveMembers();
+  closeModal('mb-modal');
+  rebuildLoginSelect();
+  renderMemberList();
+  // refresh admin tabs
+  if(CUR?.t==='admin') refreshAdminMemberTabs();
+}
+function deleteMember(id){
+  const m=MB.find(x=>x.id===id);if(!m)return;
+  if(!confirm(`「${getDN(id)||m.name}」を削除しますか？
+このメンバーのデータは残ります。`))return;
+  MB=MB.filter(x=>x.id!==id);
+  saveMembers();
+  rebuildLoginSelect();
+  renderMemberList();
+  if(CUR?.t==='admin') refreshAdminMemberTabs();
+}
+function renderMemberList(){
+  const el=document.getElementById('a-mb-list');if(!el)return;
+  if(!MB.length){el.innerHTML='<div class="nd">メンバーがいません</div>';return;}
+  let html='<div class="sc"><div class="sb op" style="border-top:none">';
+  MB.forEach(m=>{
+    const nm=getDN(m.id)||m.name;
+    html+=`<div class="tr"><div class="tb">
+      <div class="tt">${esc(nm)}</div>
+      <div class="tps"><span class="pill pi-t">PW: ${esc(m.pw)}</span></div>
+    </div>
+    <div style="display:flex;gap:4px;flex-shrink:0">
+      <button class="btn btn-xs" onclick="openEditMember('${m.id}')">編集</button>
+      <button class="btn btn-xs btn-d" onclick="deleteMember('${m.id}')">削除</button>
+    </div></div>`;
+  });
+  html+='</div></div>';el.innerHTML=html;
+}
+function rebuildLoginSelect(){
+  const sel=document.getElementById('lw');if(!sel)return;
+  sel.innerHTML='<option value="">選択してください</option>'+
+    MB.map(m=>`<option value="${m.id}">${esc(getDN(m.id)||m.name)}</option>`).join('')+
+    '<option value="admin">管理者</option>';
+}
+function refreshAdminMemberTabs(){
+  // progress tabs
+  const pt=document.getElementById('a-pm');
+  if(pt){pt.innerHTML=MB.map((m,i)=>{const nm=getDN(m.id);return`<button class="mt ${i===0?'on':''}" onclick="aPM='${m.id}';renderAProg();setMT(this,'a-pm')">${nm}</button>`;}).join('');
+  if(MB.length>0){aPM=MB[0].id;renderAProg();}}
+  // task filter tabs
+  const tt=document.getElementById('a-tm');
+  if(tt){tt.innerHTML=`<button class="mt on" onclick="aTM='all';renderTasks();setMT(this,'a-tm')">全員</button>`+MB.map(m=>`<button class="mt" onclick="aTM='${m.id}';renderTasks();setMT(this,'a-tm')">${getDN(m.id)}</button>`).join('');}
+  // coaching tabs
+  const coacht=document.getElementById('a-coach-mtabs');
+  if(coacht) coacht.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aCoachMid='${m.id}';renderCoaching();setMT(this,'a-coach-mtabs')">${getDN(m.id)}</button>`).join('');
+  // monthly tabs
+  const mot2=document.getElementById('a-mo-mtabs');
+  if(mot2) mot2.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aMoMid='${m.id}';renderAdminMonthly();setMT(this,'a-mo-mtabs')">${getDN(m.id)}</button>`).join('');
+  // rebuild member dropdowns in task forms
+  const msel=['nt-me','bulk-me'];
+  msel.forEach(sid=>{
+    const s=document.getElementById(sid);if(!s)return;
+    s.innerHTML='<option value="all">全員共通</option>'+MB.map(m=>`<option value="${m.id}">${esc(getDN(m.id)||m.name)}</option>`).join('');
+  });
+}
+
+// ===== COACHING ANALYSIS =====
+function renderCoaching(){
+  const mid=aCoachMid;
+  const el=document.getElementById('a-coach-content');if(!el)return;
+  const STG=getStages();
+  const data=gmd(mid),chk=data.checked||{},doneAt=data.doneAt||{};
+  const nm=getDN(mid);
+
+  // Collect all completed items with dates
+  const allDone=[];
+  STG.forEach(s=>{
+    s.tasks.forEach((tk,i)=>{
+      const key=s.id+':'+i;
+      if(chk[key]===true&&doneAt[key]){
+        allDone.push({stage:s.label,stageTitle:s.title,task:tk.t,date:doneAt[key],stageId:s.id,bar:s.bar,badge:s.badge,bt:s.bt});
+      }
+    });
+  });
+  allDone.sort((a,b)=>parseJaDate(a.date)-parseJaDate(b.date));
+
+  const totalItems=STG.reduce((a,s)=>a+s.tasks.length,0);
+  const doneCount=allDone.length;
+  const overallPct=totalItems>0?Math.round(doneCount/totalItems*100):0;
+
+  // calc pace metrics
+  let daySpan=0,paceStr='—',projFinish='—',weeklyRate='—';
+  const today=new Date();
+  if(allDone.length>=2){
+    const d1=parseJaDate(allDone[0].date),d2=parseJaDate(allDone[allDone.length-1].date);
+    daySpan=Math.ceil((d2-d1)/864e5)+1;
+    const daysFromStart=Math.ceil((today-d1)/864e5)+1;
+    const dailyRate=doneCount/Math.max(daysFromStart,1);
+    weeklyRate=(dailyRate*7).toFixed(1);
+    paceStr=(daySpan/doneCount).toFixed(1)+'日/項目';
+    if(dailyRate>0){
+      const remaining=totalItems-doneCount;
+      const projDays=Math.ceil(remaining/dailyRate);
+      const projDate=new Date(today.getTime()+projDays*864e5);
+      projFinish=`${projDate.getFullYear()}/${projDate.getMonth()+1}/${projDate.getDate()}`;
+    }
+  }
+
+  let html='';
+
+  // ---- Big progress ring style summary ----
+  const pctColor=overallPct>=80?'var(--ac)':overallPct>=50?'var(--bl)':overallPct>=25?'var(--am)':'var(--rd)';
+  html+=`<div style="display:flex;align-items:center;gap:20px;background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:20px;margin-bottom:14px;flex-wrap:wrap">
+    <div style="text-align:center;flex-shrink:0">
+      <div style="font-size:48px;font-weight:700;color:${pctColor};line-height:1">${overallPct}%</div>
+      <div style="font-size:12px;color:var(--tx2);margin-top:4px">全体達成率</div>
+      <div class="pt" style="height:8px;width:120px;margin:8px auto 0"><div class="pf" style="width:${overallPct}%;background:${pctColor}"></div></div>
+    </div>
+    <div style="flex:1;min-width:180px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${sh(doneCount+'/'+totalItems,'完了項目数')}
+      ${sh(allDone.length?allDone[0].date:'—','学習開始日')}
+      ${sh(paceStr,'平均習得ペース')}
+      ${sh(weeklyRate==='—'?'—':weeklyRate+'項目/週','週間習得ペース')}
+      ${sh(daySpan?daySpan+'日':'—','経過日数')}
+      ${sh(projFinish,'完了予測日')}
+    </div>
+  </div>`;
+
+  if(!allDone.length){
+    el.innerHTML=html+'<div class="nd">まだ完了した項目がありません</div>';return;
+  }
+
+  // ---- Stage-by-stage achievement breakdown ----
+  html+=`<div class="cc"><div class="ctt">📊 ステージ別達成状況</div>`;
+  STG.forEach(s=>{
+    const items=allDone.filter(x=>x.stageId===s.id);
+    const tot=s.tasks.length;
+    const pct=Math.round(items.length/tot*100);
+    // calc stage pace
+    let stagePace='—',stageStart='—',stageEnd='—';
+    if(items.length>=1){stageStart=items[0].date;}
+    if(items.length===tot){stageEnd=items[items.length-1].date;}
+    if(items.length>=2){
+      const sd=parseJaDate(items[0].date),ed=parseJaDate(items[items.length-1].date);
+      const span=Math.ceil((ed-sd)/864e5)+1;
+      stagePace=(span/items.length).toFixed(1)+'日/項目';
+    }
+    const stageColor=pct===100?'var(--ac)':pct>=50?'var(--bl)':'var(--tx3)';
+    html+=`<div style="margin-bottom:14px;padding:12px;background:${pct===100?'var(--acl)':'var(--sf2)'};border-radius:var(--r)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span class="bdg" style="background:${s.badge};color:${s.bt}">${s.label}</span>
+        <span style="font-size:13px;font-weight:600;flex:1">${s.title}</span>
+        <span style="font-size:18px;font-weight:700;color:${stageColor}">${pct}%</span>
+      </div>
+      <div class="pt" style="height:6px;margin-bottom:8px"><div class="pf" style="width:${pct}%;background:${s.bar}"></div></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--tx2)">
+        <span>完了: <strong style="color:var(--tx)">${items.length}/${tot}項目</strong></span>
+        ${stageStart!=='—'?`<span>開始: <strong style="color:var(--tx)">${stageStart}</strong></span>`:''}
+        ${stageEnd!=='—'?`<span>完了: <strong style="color:var(--ac)">${stageEnd}</strong></span>`:''}
+        ${stagePace!=='—'?`<span>ペース: <strong style="color:var(--tx)">${stagePace}</strong></span>`:''}
+        ${pct===100?'<span style="color:var(--ac);font-weight:700">✓ クリア！</span>':pct===0?'<span style="color:var(--tx3)">未着手</span>':''}
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // ---- Timeline (compact) ----
+  html+=`<div class="cc"><div class="ctt">📅 完了タイムライン</div>`;
+  STG.forEach(s=>{
+    const items=allDone.filter(x=>x.stageId===s.id);
+    if(!items.length)return;
+    html+=`<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px">${s.label}</div>
+      <div style="padding-left:8px;border-left:2px solid ${s.bar}">`;
+    items.forEach((item,idx)=>{
+      let since='';
+      if(idx>0){const diff=Math.ceil((parseJaDate(item.date)-parseJaDate(items[idx-1].date))/864e5);if(diff>0)since=`<span style="font-size:10px;color:var(--tx3);margin-left:6px;background:var(--sf3);padding:1px 5px;border-radius:10px">+${diff}日</span>`;}
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:0.5px solid var(--bd)">
+        <span style="font-size:11px;color:var(--ac);font-weight:600;white-space:nowrap;min-width:72px">${item.date}</span>
+        ${since}
+        <span style="font-size:12px;flex:1">${esc(item.task)}</span>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  html+=`</div>`;
+
+  // ---- Daily pace bar chart ----
+  const byDate={};
+  allDone.forEach(x=>{byDate[x.date]=(byDate[x.date]||0)+1;});
+  const dateKeys=Object.keys(byDate).sort((a,b)=>parseJaDate(a)-parseJaDate(b));
+  if(dateKeys.length>=1){
+    const mx=Math.max(...Object.values(byDate));
+    html+=`<div class="cc"><div class="ctt">📈 日別習得数</div><div class="bc">`;
+    dateKeys.forEach(d=>{
+      const c=byDate[d],p=Math.round(c/mx*100);
+      html+=brw(d,p,'var(--s1r)',c+'項目');
+    });
+    html+=`</div></div>`;
+  }
+
+  // ---- 稼働時間グラフ ----
+  const shifts2=data.shifts||{},l72=l7d();
+  if(l72.some(d=>shifts2[d]?.length)){
+    const hrs2=l72.map(d=>(shifts2[d]||[]).reduce((a,s)=>a+calcM(s.start,s.end,s.brk||0),0)/60);
+    const mx2=Math.max(...hrs2,1);
+    html+=`<div class="cc"><div class="ctt">📉 稼働時間（直近7日）</div><div class="bc">`;
+    l72.forEach((d,i)=>{const h=hrs2[i],p=Math.round(h/mx2*100);html+=brw(fs(d),p,'var(--bl)',h>0?h.toFixed(1)+'h':'—');});
+    html+=`</div></div>`;
+  }
+
+  // ---- 本日のタスク完了率 ----
+  const ad2=gad(),today2=td(),asgn2=(ad2.tasks||[]).filter(t=>t.member===mid||t.member==='all');
+  if(asgn2.length){
+    const dd2=data.dailyDone||{},dc2=asgn2.filter(t=>dd2[t.id+':'+today2]).length;
+    const p2=Math.round(dc2/asgn2.length*100);
+    const c2=p2>=80?'var(--ac)':p2>=50?'var(--am)':'var(--rd)';
+    html+=`<div class="cc"><div class="ctt">✅ 本日のタスク完了率</div>
+      <div style="display:flex;align-items:center;gap:20px;padding:8px 0">
+        <div style="font-size:40px;font-weight:700;color:${c2}">${p2}%</div>
+        <div style="flex:1">
+          <div class="pt" style="height:10px"><div class="pf" style="width:${p2}%;background:${c2}"></div></div>
+          <div style="font-size:12px;color:var(--tx2);margin-top:6px">${dc2}/${asgn2.length} タスク完了</div>
+        </div>
+      </div></div>`;
+  }
+
+  el.innerHTML=html;
+}
+
+// parse Japanese date string like "2024/4/16" or "2024年4月16日"
+function parseJaDate(s){
+  if(!s)return new Date(0);
+  // "2024/4/16" or "2024/04/16"
+  let m=s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  // "2024年4月16日"
+  m=s.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  return new Date(s);
+}
+
+// ===== COMPANY MANAGEMENT =====
+function addCompany(){
+  const nm=document.getElementById('co-name')?.value?.trim();
+  if(!nm){alert('会社名を入力してください');return;}
+  const cos=getCompanies();
+  if(cos.includes(nm)){alert('すでに登録されています');return;}
+  cos.push(nm);saveCompanies(cos);
+  document.getElementById('co-name').value='';
+  renderCompanyList();refreshAllCoSelects();
+}
+function delCompany(nm){
+  if(!confirm(`「${nm}」を削除しますか？`))return;
+  const cos=getCompanies().filter(c=>c!==nm);saveCompanies(cos);
+  renderCompanyList();refreshAllCoSelects();
+}
+function renderCompanyList(){
+  const el=document.getElementById('a-co-list');if(!el)return;
+  const cos=getCompanies();
+  if(!cos.length){el.innerHTML='<div class="nd">まだ会社が登録されていません</div>';return;}
+  let html='<div class="sc"><div class="sb op" style="border-top:none">';
+  cos.forEach(c=>{
+    html+=`<div class="tr"><div class="tb"><div class="tt">${esc(c)}</div></div>
+      <button class="btn btn-xs btn-d" onclick="delCompany('${esc(c)}')">削除</button></div>`;
+  });
+  html+='</div></div>';el.innerHTML=html;
+}
+
+// ===== MONTHLY REPORT (Member) =====
+function getShiftMonth(mid){
+  if(!shiftMonthState[mid]){
+    const n=new Date();shiftMonthState[mid]={year:n.getFullYear(),month:n.getMonth()+1};
+  }
+  return shiftMonthState[mid];
+}
+function shiftMonthStep(dir){
+  const mid=CUR?.mid;if(!mid)return;
+  const st=getShiftMonth(mid);
+  st.month+=dir;
+  if(st.month>12){st.month=1;st.year++;}
+  if(st.month<1){st.month=12;st.year--;}
+  renderShift(mid);
+}
+function renderShiftSummary(mid,year,month){
+  const el=document.getElementById('m-shift-summary');if(!el)return;
+  const data=gmd(mid),shifts=data.shifts||{};
+  const prefix=`${year}-${String(month).padStart(2,'0')}`;
+  const days=Object.keys(shifts).filter(d=>d.startsWith(prefix));
+  if(!days.length){el.innerHTML='';return;}
+  let totalNet=0,totalBrk=0,totalRaw=0;
+  const byCompany={};
+  days.forEach(day=>{
+    (shifts[day]||[]).forEach(sl=>{
+      const net=calcM(sl.start,sl.end,sl.brk||0);
+      const raw=calcM(sl.start,sl.end,0);
+      totalNet+=net;totalBrk+=(sl.brk||0);totalRaw+=raw;
+      const co=sl.company||'未設定';
+      byCompany[co]=(byCompany[co]||0)+net;
+    });
+  });
+  let html=`<div style="background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:14px 16px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+      ${sh((totalNet/60).toFixed(1)+'h','実働時間')}
+      ${sh(totalBrk+'分','休憩合計')}
+      ${sh(days.length+'日','出勤日数')}
+    </div>`;
+  if(Object.keys(byCompany).length>1||!byCompany['未設定']){
+    html+=`<div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">会社別稼働</div>`;
+    Object.entries(byCompany).sort((a,b)=>b[1]-a[1]).forEach(([co,min])=>{
+      const pct=totalNet>0?Math.round(min/totalNet*100):0;
+      html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <span style="font-size:12px;min-width:100px;flex-shrink:0">${esc(co)}</span>
+        <div class="pt" style="flex:1;height:14px"><div class="pf" style="width:${pct}%;background:var(--bl)"></div></div>
+        <span style="font-size:12px;color:var(--tx2);min-width:50px;text-align:right">${(min/60).toFixed(1)}h</span>
+      </div>`;
+    });
+  }
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+// ===== MONTHLY REPORT (Admin) =====
+function adminMonthStep(dir){
+  adminMonthState.month+=dir;
+  if(adminMonthState.month>12){adminMonthState.month=1;adminMonthState.year++;}
+  if(adminMonthState.month<1){adminMonthState.month=12;adminMonthState.year--;}
+  renderAdminMonthly();
+}
+function renderAdminMonthly(){
+  const el=document.getElementById('a-mo-content');if(!el)return;
+  const lbl=document.getElementById('a-mo-label');
+  if(lbl)lbl.textContent=`${adminMonthState.year}年${adminMonthState.month}月`;
+  const prefix=`${adminMonthState.year}-${String(adminMonthState.month).padStart(2,'0')}`;
+  const mid=aMoMid;
+  const data=gmd(mid),shifts=data.shifts||{};
+  const days=Object.keys(shifts).filter(d=>d.startsWith(prefix)).sort();
+
+  let totalNet=0,totalBrk=0,totalRaw=0;
+  const byCompany={},allSlots=[];
+  days.forEach(day=>{
+    (shifts[day]||[]).forEach(sl=>{
+      const net=calcM(sl.start,sl.end,sl.brk||0);
+      const raw=calcM(sl.start,sl.end,0);
+      totalNet+=net;totalBrk+=(sl.brk||0);totalRaw+=raw;
+      const co=sl.company||'未設定';
+      byCompany[co]=(byCompany[co]||0)+net;
+      allSlots.push({day,sl,net});
+    });
+  });
+
+  if(!days.length){el.innerHTML='<div class="nd">この月のシフト記録がありません</div>';return;}
+
+  let html=`<div class="sr" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+    ${sh((totalNet/60).toFixed(1)+'h','実働時間')}
+    ${sh(totalBrk+'分','休憩合計')}
+    ${sh((totalRaw/60).toFixed(1)+'h','拘束時間')}
+    ${sh(days.length+'日','出勤日数')}
+  </div>`;
+
+  // company breakdown
+  if(Object.keys(byCompany).length){
+    html+=`<div class="cc"><div class="ctt">会社別稼働時間</div><div class="bc">`;
+    const mx=Math.max(...Object.values(byCompany));
+    Object.entries(byCompany).sort((a,b)=>b[1]-a[1]).forEach(([co,min])=>{
+      const p=mx>0?Math.round(min/mx*100):0;
+      html+=brw(co,p,'var(--bl)',(min/60).toFixed(1)+'h');
+    });
+    html+=`</div></div>`;
+  }
+
+  // daily detail
+  html+=`<div class="cc"><div class="ctt">日別詳細</div>`;
+  days.forEach(day=>{
+    const slots=shifts[day]||[];
+    const dayNet=slots.reduce((a,s)=>a+calcM(s.start,s.end,s.brk||0),0);
+    html+=`<div style="padding:8px 0;border-bottom:0.5px solid var(--bd)">
+      <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:4px">${fd(day)}　<span style="font-weight:400;color:var(--tx2)">${(dayNet/60).toFixed(1)}h</span></div>`;
+    slots.forEach(sl=>{
+      const net=calcM(sl.start,sl.end,sl.brk||0);
+      html+=`<div style="display:flex;gap:8px;font-size:12px;color:var(--tx2);padding:2px 8px">
+        <span style="min-width:110px">${sl.start}〜${sl.end}</span>
+        <span style="flex:1">${esc(sl.work)}${sl.company?` <span style="color:var(--bl)">[${esc(sl.company)}]</span>`:''}</span>
+        <span>${(net/60).toFixed(1)}h${sl.brk?` <span style="color:var(--tx3)">(休${sl.brk}分)</span>`:''}</span>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+// ===== OVERDUE CHECK =====
+function checkOverdue(mid){
+  const ad=gad(),today=td();
+  const tasks=(ad.tasks||[]).filter(t=>t.member===mid||t.member==='all');
+  const overdue=tasks.filter(t=>{
+    if(!t.deadline||t.deadline>=today)return false;
+    const data=gmd(mid);
+    return !(data.dailyDone||{})[t.id+':'+today];
+  });
+  const banner=document.getElementById('overdue-banner');
+  const txt=document.getElementById('overdue-text');
+  if(!banner||!txt)return;
+  if(overdue.length){
+    txt.innerHTML=`<strong>期限切れのタスクが${overdue.length}件あります：</strong> `+overdue.map(t=>`「${esc(t.title)}」(${t.deadline})`).join('、');
+    banner.style.display='block';
+  } else {
+    banner.style.display='none';
+  }
+}
+
+// ===== REMAIN TASKS (Admin) =====
+function renderRemain(){
+  const el=document.getElementById('a-remain-content');if(!el)return;
+  const ad=gad(),today=td();
+  const allTasks=ad.tasks||[];
+  let html='<div class="sec" style="margin-top:0">メンバー別・残タスク一覧</div>';
+
+  MB.forEach(mid_obj=>{
+    const mid=mid_obj.id;
+    const nm=getDN(mid)||mid_obj.name;
+    const myTasks=allTasks.filter(t=>t.member===mid||t.member==='all');
+    const data=gmd(mid),done=data.dailyDone||{};
+
+    const overdue=myTasks.filter(t=>t.deadline&&t.deadline<today&&!done[t.id+':'+today]);
+
+    const remaining=myTasks.filter(t=>!done[t.id+':'+today]);
+    const completed=myTasks.filter(t=>done[t.id+':'+today]);
+
+    const STG=getStages();
+    const chk=data.checked||{};
+    let stageTot=0,stageDn=0;
+    STG.forEach(s=>{stageTot+=s.tasks.length;s.tasks.forEach((_,i)=>{if(chk[s.id+':'+i]===true)stageDn++;});});
+    const stageRem=stageTot-stageDn;
+
+    html+=`<div class="rc" style="margin-bottom:14px">
+      <div class="rt">
+        <div class="rav">${nm.charAt(0)}</div>
+        <div class="ri">
+          <div class="rn">${nm}</div>
+          <div class="rs">日次タスク残 ${remaining.length}件 ／ ステージ項目残 ${stageRem}件</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          ${overdue.length?`<span style="background:var(--rdl);color:var(--rd);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">期限切れ ${overdue.length}件</span>`:''}
+          ${!overdue.length&&remaining.length===0?`<span style="background:var(--acl);color:var(--ac);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">✓ 全完了</span>`:''}
+        </div>
+      </div>`;
+
+    // progress bars
+    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">日次タスク</div>
+        <div class="pt" style="height:8px"><div class="pf" style="width:${myTasks.length>0?Math.round(completed.length/myTasks.length*100):0}%;background:var(--ac)"></div></div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:3px">完了 ${completed.length} / ${myTasks.length}件</div>
+      </div>
+      <div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">ステージ進捗</div>
+        <div class="pt" style="height:8px"><div class="pf" style="width:${stageTot>0?Math.round(stageDn/stageTot*100):0}%;background:var(--bl)"></div></div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:3px">完了 ${stageDn} / ${stageTot}項目</div>
+      </div>
+    </div>`;
+
+    // overdue list
+    if(overdue.length){
+      html+=`<div style="background:var(--rdl);border-radius:var(--r);padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--rd);margin-bottom:6px">⚠️ 期限切れ（未完了）</div>`;
+      overdue.forEach(t=>{
+        html+=`<div style="font-size:12px;color:var(--rd);padding:3px 0;border-bottom:0.5px solid rgba(190,58,58,.15)">${esc(t.title)} <span style="color:rgba(190,58,58,.6);font-size:11px">— ${t.deadline}</span></div>`;
+      });
+      html+=`</div>`;
+    }
+
+    // remaining tasks collapsed
+    const otherRem=remaining.filter(t=>!overdue.includes(t));
+    if(otherRem.length){
+      html+=`<details style="margin-top:4px"><summary style="font-size:12px;color:var(--tx2);cursor:pointer;padding:4px 0">その他の残タスク（${otherRem.length}件）</summary>
+        <div style="margin-top:6px">`;
+      otherRem.forEach(t=>{
+        html+=`<div style="font-size:12px;color:var(--tx2);padding:3px 0;border-bottom:0.5px solid var(--bd)">${esc(t.title)}${t.deadline?` <span style="color:var(--tx3);font-size:11px">— ${t.deadline}</span>`:''}</div>`;
+      });
+      html+=`</div></details>`;
+    }
+
+    html+=`</div>`;
+  });
+
+  el.innerHTML=html;
+}
+
+// ===== HELPERS =====
+function tog(bid,cid){const b=document.getElementById(bid),c=document.getElementById(cid);if(!b||!c)return;const o=b.classList.toggle('op');c.classList.toggle('op',o);}
+function sp(s,chk){const d=s.tasks.filter((_,i)=>chk[s.id+':'+i]===true).length,t=s.tasks.length;return{d,t,p:t>0?Math.round(d/t*100):0};}
+function sh(n,l){return`<div class="st"><div class="sn">${n}</div><div class="sl">${l}</div></div>`}
+function dlP(dl){const today=td(),diff=Math.ceil((new Date(dl)-new Date(today))/864e5);let cls='pi-ok',txt=`納期: ${dl}`;if(diff<0){cls='pi-ov';txt=`超過: ${dl}`;}else if(diff<=3){cls='pi-w';txt=`残${diff}日`;}return `<span class="pill ${cls}">${txt}</span>`;}
+function td(){return new Date().toISOString().slice(0,10)}
+function fd(s){const d=new Date(s);return`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`}
+function fs(s){const d=new Date(s);return`${d.getMonth()+1}/${d.getDate()}`}
+function calcM(s,e,brk){if(!s||!e)return 0;const[sh2,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);return Math.max(0,(eh*60+em)-(sh2*60+sm)-(brk||0));}
+function l7d(){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10);});}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ===== DATA BACKUP / RESTORE =====
+function exportData(){
+  const data=gs();
+  const now=new Date();
+  const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`backup_${stamp}.json`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const res=document.getElementById('import-result');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      // validate: must be an object
+      if(typeof data!=='object'||Array.isArray(data)) throw new Error('形式が正しくありません');
+      ss(data);
+      loadMembers();
+      res.innerHTML='<span style="color:var(--ac);font-weight:600">✓ 復元しました！ページをリロードして反映を確認してください。</span>';
+      res.innerHTML+='<br><button class="btn btn-p btn-sm" style="margin-top:8px" onclick="location.reload()">今すぐリロード</button>';
+      renderDataSummary();
+    } catch(err){
+      res.innerHTML='<span style="color:var(--rd)">⚠️ 読み込みに失敗しました: '+err.message+'</span>';
+    }
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function renderDataSummary(){
+  const el=document.getElementById('data-summary');if(!el)return;
+  const data=gs();
+  const members=data._members||DEFAULT_MB;
+  const admin=data._a||{};
+  const taskCount=(admin.tasks||[]).length;
+  const coCount=(admin.companies||[]).length;
+  let shiftDays=0,checkCount=0;
+  members.forEach(m=>{
+    const md=data[m.id]||{};
+    shiftDays+=Object.keys(md.shifts||{}).length;
+    checkCount+=Object.values(md.checked||{}).filter(v=>v===true).length;
+  });
+  const stgCount=getStages().reduce((a,s)=>a+s.tasks.length,0);
+  const lastExport=data._lastExport||'なし';
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px">
+      <div>👥 メンバー数：<strong>${members.length}名</strong></div>
+      <div>✓ チェック済み項目：<strong>${checkCount}件</strong></div>
+      <div>📋 登録タスク：<strong>${taskCount}件</strong></div>
+      <div>📅 シフト記録：<strong>${shiftDays}日分</strong></div>
+      <div>🏢 登録会社：<strong>${coCount}社</strong></div>
+      <div>📊 ステージ項目：<strong>${stgCount}件</strong></div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--tx3)">
+      ストレージ使用量: 約${Math.round(JSON.stringify(data).length/1024)}KB
+    </div>`;
+}
+
+// ===== SHIFT CSV EXPORT =====
+function downloadShiftCSV(){
+  const mid=CUR?.mid;if(!mid)return;
+  const st=getShiftMonth(mid);
+  const prefix=st.year+'-'+String(st.month).padStart(2,'0');
+  const data=gmd(mid),shifts=data.shifts||{};
+  const days=Object.keys(shifts).filter(d=>d.startsWith(prefix)).sort();
+  if(!days.length){alert('この月のシフト記録がありません');return;}
+
+  let totalNetMin=0,totalBrkMin=0,totalRawMin=0;
+  const rows=[];
+
+  days.forEach(function(day){
+    const slots=shifts[day]||[];
+    const dayNetMin=slots.reduce(function(a,s){return a+calcM(s.start,s.end,s.brk||0);},0);
+    const dayBrkMin=slots.reduce(function(a,s){return a+(s.brk||0);},0);
+    const dayRawMin=slots.reduce(function(a,s){return a+calcM(s.start,s.end,0);},0);
+    totalNetMin+=dayNetMin;totalBrkMin+=dayBrkMin;totalRawMin+=dayRawMin;
+    slots.forEach(function(sl){
+      const netMin=calcM(sl.start,sl.end,sl.brk||0);
+      const rawMin=calcM(sl.start,sl.end,0);
+      rows.push([fd(day),sl.start,sl.end,sl.work||'',sl.company||'',sl.brk||0,rawMin,netMin,(netMin/60).toFixed(2)]);
+    });
+    if(slots.length>1){
+      rows.push([fd(day)+' [日計]','','','','',dayBrkMin,dayRawMin,dayNetMin,(dayNetMin/60).toFixed(2)]);
+    }
+  });
+
+  const nm=getDN(mid);
+  const CRLF='\r\n';
+  var csv='\uFEFF';
+  csv+='メンバー,'+nm+CRLF;
+  csv+='対象月,'+st.year+'年'+st.month+'月'+CRLF;
+  csv+='月合計実働時間,'+(totalNetMin/60).toFixed(2)+'時間 ('+totalNetMin+'分)'+CRLF;
+  csv+='月合計休憩時間,'+(totalBrkMin/60).toFixed(2)+'時間 ('+totalBrkMin+'分)'+CRLF;
+  csv+='月合計拘束時間,'+(totalRawMin/60).toFixed(2)+'時間 ('+totalRawMin+'分)'+CRLF;
+  csv+='出勤日数,'+days.length+'日'+CRLF;
+  csv+=CRLF;
+  csv+='日付,開始,終了,業務内容,会社,休憩(分),拘束時間(分),実働時間(分),実働時間(h)'+CRLF;
+
+  rows.forEach(function(r){
+    csv+=r.map(function(v){
+      var s=String(v);
+      return (s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0)?'"'+s.replace(/"/g,'""')+'"':s;
+    }).join(',')+CRLF;
+  });
+  csv+='月合計,,,,,'+totalBrkMin+','+totalRawMin+','+totalNetMin+','+(totalNetMin/60).toFixed(2)+CRLF;
+
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='shift_'+nm+'_'+st.year+String(st.month).padStart(2,'0')+'.csv';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+// ===== INIT =====
+loadMembers();
+rebuildLoginSelect();
+</script>
+</body>
+</html>
