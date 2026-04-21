@@ -219,6 +219,33 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
   </div>
 </div>
 
+<!-- TASK EDIT MODAL -->
+<div class="modal-bg" id="te-modal">
+  <div class="modal">
+    <h2>タスクを編集</h2>
+    <div class="tfg" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="field" style="margin:0"><label>タスクタイトル</label><input type="text" id="te-ti" placeholder="タスクタイトル"></div>
+      <div class="field" style="margin:0"><label>担当メンバー</label>
+        <select id="te-me"><option value="all">全員共通</option></select>
+      </div>
+      <div class="field" style="margin:0"><label>種別</label><select id="te-ty"><option value="daily">日次タスク</option><option value="milestone">マイルストーン</option></select></div>
+      <div class="field" style="margin:0"><label>納期</label><input type="date" id="te-dl"></div>
+      <div class="field" style="margin:0"><label>関連ステージ</label>
+        <select id="te-st"><option value="">なし</option><option value="ステージ1">ステージ1</option><option value="ステージ2">ステージ2</option><option value="ステージ3">ステージ3</option><option value="ステージ4">ステージ4</option></select>
+      </div>
+      <div class="field" style="margin:0"><label>会社</label>
+        <select id="te-co-sel" onchange="document.getElementById('te-co').value=this.value" style="margin-bottom:4px"><option value="">選択…</option></select>
+        <input type="text" id="te-co" placeholder="直接入力もOK">
+      </div>
+      <div class="field" style="grid-column:1/-1;margin:0"><label>詳細・説明</label><textarea id="te-de" placeholder="タスクの詳細…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveTaskEdit()" style="flex:1">保存</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('te-modal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- MEMBER ADD MODAL -->
 <div class="modal-bg" id="mb-modal">
   <div class="modal">
@@ -240,6 +267,38 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <span style="font-size:16px;flex-shrink:0">⚠️</span>
     <span id="overdue-text" style="flex:1"></span>
     <button onclick="document.getElementById('overdue-banner').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;font-family:inherit">閉じる</button>
+  </div>
+</div>
+
+<!-- SHIFT SLOT EDIT MODAL -->
+<div class="modal-bg" id="se-modal">
+  <div class="modal">
+    <h2>シフトを編集</h2>
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-end;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="font-size:11px;color:var(--tx2)">開始</span>
+        <input type="time" id="se-s" style="padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none;width:110px">
+      </div>
+      <span style="font-size:12px;color:var(--tx2);padding-bottom:8px">〜</span>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="font-size:11px;color:var(--tx2)">終了</span>
+        <input type="time" id="se-e" style="padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none;width:110px">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="font-size:11px;color:var(--tx2)">休憩（分）</span>
+        <input type="number" id="se-b" min="0" max="480" style="padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none;width:80px">
+      </div>
+    </div>
+    <div class="field"><label>業務内容</label><input type="text" id="se-w" placeholder="例：面接対応"></div>
+    <div class="field">
+      <label>会社</label>
+      <select id="se-co-sel" onchange="document.getElementById('se-co').value=this.value" style="margin-bottom:4px;width:100%;padding:8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none"><option value="">選択…</option></select>
+      <input type="text" id="se-co" placeholder="直接入力もOK">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveSlotEdit()" style="flex:1">保存</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('se-modal')">キャンセル</button>
+    </div>
   </div>
 </div>
 
@@ -548,10 +607,24 @@ function ss(s){
 function gmd(m){_cache[m]=_cache[m]||{};return _cache[m]}
 function smd(m,d){_cache[m]=d;ss(_cache);}
 function gad(){_cache._a=_cache._a||{};return _cache._a}
-function sad(d){_cache._a=d;ss(_cache);}
+function sad(d){
+  _cache._a=d;
+  _cache=JSON.parse(JSON.stringify(_cache)); // deep clone to ensure reactivity
+  try{localStorage.setItem('pjm5',JSON.stringify(_cache))}catch{}
+  // save immediately (no debounce) for admin data
+  saveToGAS();
+}
 
 function saveToGAS(){
-  fetch(GAS_URL,{method:'POST',body:JSON.stringify(_cache)}).catch(()=>{});
+  return fetch(GAS_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify(_cache)
+  }).catch(()=>{});
+}
+function saveToGASNow(){
+  if(_saveTimer)clearTimeout(_saveTimer);
+  return saveToGAS();
 }
 
 function loadFromGAS(callback){
@@ -825,6 +898,7 @@ function renderShift(mid){
             <span class="stm">${sl.start} 〜 ${sl.end}</span>
             <span class="sw">${esc(sl.work)}${coTxt}${brkTxt}</span>
             <span class="sdur">${(netM/60).toFixed(1)}h</span>
+            <button class="btn btn-xs" onclick="openSlotEdit('${mid}','${day}',${i})">編集</button>
             <button class="btn btn-xs btn-d" onclick="delSl('${mid}','${day}',${i})">削除</button>
           </div>`;
         }).join('')}
@@ -866,6 +940,7 @@ function renderShift(mid){
     if(sel){const cos=getCompanies();sel.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
   });
 }
+let seEditMid=null,seEditDay=null,seEditIdx=null;
 function syncCoSel(day){
   const sel=document.getElementById('si-'+day+'-co-sel');
   const inp=document.getElementById('si-'+day+'-co');
@@ -889,6 +964,35 @@ function addSl(mid,day){
   smd(mid,d);renderShift(mid);
 }
 function delSl(mid,day,idx){const d=gmd(mid);d.shifts[day].splice(idx,1);smd(mid,d);renderShift(mid);}
+function openSlotEdit(mid,day,idx){
+  const data=gmd(mid);const sl=data.shifts?.[day]?.[idx];if(!sl)return;
+  seEditMid=mid;seEditDay=day;seEditIdx=idx;
+  document.getElementById('se-s').value=sl.start||'';
+  document.getElementById('se-e').value=sl.end||'';
+  document.getElementById('se-b').value=sl.brk||0;
+  document.getElementById('se-w').value=sl.work||'';
+  document.getElementById('se-co').value=sl.company||'';
+  // populate company select
+  const cs=document.getElementById('se-co-sel');
+  const cos=getCompanies();
+  cs.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(sl.company)cs.value=sl.company;
+  openModal('se-modal');
+  setTimeout(()=>document.getElementById('se-w')?.focus(),50);
+}
+function saveSlotEdit(){
+  const s=document.getElementById('se-s').value;
+  const e=document.getElementById('se-e').value;
+  const w=document.getElementById('se-w').value.trim();
+  const b=parseInt(document.getElementById('se-b').value||'0',10)||0;
+  const co=document.getElementById('se-co').value||'';
+  if(!s||!e||!w){alert('すべて入力してください');return;}
+  const data=gmd(seEditMid);
+  data.shifts[seEditDay][seEditIdx]={start:s,end:e,work:w,brk:b,company:co};
+  smd(seEditMid,data);
+  closeModal('se-modal');
+  renderShift(seEditMid);
+}
 function delDay(mid,day){if(!confirm(`${fd(day)} のシフト記録を削除しますか？`))return;const d=gmd(mid);delete d.shifts[day];smd(mid,d);renderShift(mid);}
 
 // ===== ADMIN =====
@@ -1056,6 +1160,47 @@ function renderTemplates(){
   html+='</div></div>';el.innerHTML=html;
 }
 
+let teEditId=null;
+function openTaskEdit(id){
+  const ad=gad();const t=(ad.tasks||[]).find(x=>x.id===id);if(!t)return;
+  teEditId=id;
+  document.getElementById('te-ti').value=t.title||'';
+  document.getElementById('te-ty').value=t.type||'daily';
+  document.getElementById('te-dl').value=t.deadline||'';
+  document.getElementById('te-st').value=t.stage||'';
+  document.getElementById('te-co').value=t.company||'';
+  document.getElementById('te-de').value=t.desc||'';
+  // populate member select
+  const ms=document.getElementById('te-me');
+  ms.innerHTML='<option value="all">全員共通</option>'+MB.map(m=>`<option value="${m.id}">${getDN(m.id)||m.name}</option>`).join('');
+  ms.value=t.member||'all';
+  // populate company select
+  const cs=document.getElementById('te-co-sel');
+  const cos=getCompanies();
+  cs.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  openModal('te-modal');
+  setTimeout(()=>document.getElementById('te-ti')?.focus(),50);
+}
+function saveTaskEdit(){
+  const title=document.getElementById('te-ti').value.trim();
+  if(!title){alert('タイトルを入力してください');return;}
+  const ad=gad();
+  const idx=(ad.tasks||[]).findIndex(t=>t.id===teEditId);
+  if(idx<0)return;
+  ad.tasks[idx]={
+    ...ad.tasks[idx],
+    title,
+    member:document.getElementById('te-me').value,
+    type:document.getElementById('te-ty').value,
+    deadline:document.getElementById('te-dl').value,
+    stage:document.getElementById('te-st').value,
+    company:document.getElementById('te-co').value||'',
+    desc:document.getElementById('te-de').value.trim(),
+    updatedAt:new Date().toLocaleString('ja-JP')
+  };
+  sad(ad);closeModal('te-modal');renderTasks();
+}
+
 function copyTask(id){
   const ad=gad();const orig=(ad.tasks||[]).find(t=>t.id===id);if(!orig)return;
   const copy={...orig,id:'t'+Date.now(),title:'【コピー】'+orig.title,createdAt:new Date().toLocaleString('ja-JP')};
@@ -1078,6 +1223,7 @@ function renderTasks(){
       <div style="font-size:11px;color:var(--tx3);margin-top:3px">追加: ${t.createdAt}</div>
     </div>
     <div style="display:flex;gap:4px;flex-shrink:0">
+      <button class="btn btn-xs" onclick="openTaskEdit('${t.id}')">編集</button>
       <button class="btn btn-xs" onclick="copyTask('${t.id}')" title="コピーして複製">複製</button>
       <button class="btn btn-xs btn-d" onclick="delTask('${t.id}')">削除</button>
     </div></div>`;
