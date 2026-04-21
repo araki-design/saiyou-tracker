@@ -829,39 +829,94 @@ function renderDaily(mid){
   const el=document.getElementById('m-dl');if(!el)return;
   const ad=gad(),today=td();
   const allTasks=(ad.tasks||[]).filter(t=>t.member===mid||t.member==='all');
-  const activeTasks=allTasks.filter(t=>!t.deadline||t.deadline>=today);
-  const overdueTasks=allTasks.filter(t=>t.deadline&&t.deadline<today);
   if(!allTasks.length){el.innerHTML='<div class="nd">管理者からタスクが割り当てられていません</div>';return;}
   const data=gmd(mid),done=data.dailyDone||{};
+
+  // Collect unique dates: today + future deadlines (ungrouped = today)
+  // Group tasks by date: tasks with deadline show on that day, tasks without deadline show today
+  const dateMap={};
+  allTasks.forEach(t=>{
+    const dKey=t.deadline||today;
+    if(!dateMap[dKey])dateMap[dKey]=[];
+    dateMap[dKey].push(t);
+  });
+
+  // Sort dates
+  const sortedDates=Object.keys(dateMap).sort();
+
   let html='';
-  // overdue section
-  if(overdueTasks.length){
-    html+=`<div style="background:var(--rdl);border:1px solid rgba(190,58,58,.3);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--rd);margin-bottom:8px">⚠️ 期限切れのタスク（${overdueTasks.length}件）</div>`;
-    overdueTasks.forEach(t=>{const key=t.id+':'+today,chk=done[key];
-      html+=`<div class="tr" style="border-color:rgba(190,58,58,.2)"><input type="checkbox" ${chk?'checked':''} onchange="togDT('${mid}','${t.id}',this.checked)">
-        <div class="tb"><div class="tt ${chk?'dn':''}" style="${!chk?'color:var(--rd)':''}">${esc(t.title)}</div>
-        <div class="tps">${dlP(t.deadline)}${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}</div>
-        ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}</div>
+  let hasAnyVisible=false;
+
+  sortedDates.forEach(dateKey=>{
+    const isPast=dateKey<today;
+    const isToday=dateKey===today;
+    const tasks=dateMap[dateKey];
+
+    // For member view: filter out completed tasks for each date
+    const incompleteTasks=tasks.filter(t=>{
+      const chkKey=t.id+':'+dateKey;
+      // for non-deadline tasks, check against today's date
+      const checkDate=t.deadline||today;
+      return !done[t.id+':'+checkDate];
+    });
+
+    // skip dates where all tasks are done (hide completely from member)
+    if(!incompleteTasks.length) return;
+    hasAnyVisible=true;
+
+    // Date label
+    let dateLabel='';
+    let dateStyle='';
+    if(isPast){
+      dateLabel=`⚠️ ${fd(dateKey)}（期限切れ）`;
+      dateStyle='color:var(--rd);font-weight:700';
+    } else if(isToday){
+      dateLabel=`📅 今日 ${fd(dateKey)}`;
+      dateStyle='color:var(--tx);font-weight:700';
+    } else {
+      const diff=Math.ceil((new Date(dateKey)-new Date(today))/864e5);
+      dateLabel=`📌 ${fd(dateKey)}（あと${diff}日）`;
+      dateStyle='color:var(--tx2);font-weight:600';
+    }
+
+    html+=`<div style="margin-bottom:14px">
+      <div style="font-size:13px;${dateStyle};margin-bottom:8px;padding-bottom:6px;border-bottom:1.5px solid ${isPast?'var(--rd)':isToday?'var(--tx)':'var(--bd2)'}">
+        ${dateLabel}
+        <span style="font-size:11px;font-weight:400;color:var(--tx3);margin-left:6px">${incompleteTasks.length}件</span>
+      </div>
+      <div class="sc"><div class="sb op" style="border-top:none;${isPast?'background:var(--rdl)':''}">`;
+
+    incompleteTasks.forEach(t=>{
+      const checkDate=t.deadline||today;
+      const chk=done[t.id+':'+checkDate];
+      html+=`<div class="tr"><input type="checkbox" ${chk?'checked':''} onchange="togDT('${mid}','${t.id}','${checkDate}',this.checked)">
+        <div class="tb">
+          <div class="tt ${chk?'dn':''}" ${isPast&&!chk?'style="color:var(--rd)"':''}>${esc(t.title)}</div>
+          <div class="tps">
+            ${t.type==='daily'?'<span class="pill pi-t">日次</span>':'<span class="pill pi-t">マイルストーン</span>'}
+            ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
+            ${t.company?`<span class="pill pi-a">${esc(t.company)}</span>`:''}
+            ${t.deadline?dlP(t.deadline):''}
+          </div>
+          ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
+        </div>
       </div>`;
     });
-    html+=`</div>`;
+
+    html+=`</div></div></div>`;
+  });
+
+  if(!hasAnyVisible){
+    html='<div style="text-align:center;padding:32px;color:var(--ac)"><div style="font-size:24px;margin-bottom:8px">🎉</div><div style="font-size:14px;font-weight:600">今日のタスクはすべて完了しました！</div></div>';
   }
-  if(activeTasks.length){
-    html+='<div class="sc"><div class="sb op" style="border-top:none">';
-    activeTasks.forEach(t=>{const key=t.id+':'+today,chk=done[key];
-      html+=`<div class="tr"><input type="checkbox" ${chk?'checked':''} onchange="togDT('${mid}','${t.id}',this.checked)">
-        <div class="tb"><div class="tt ${chk?'dn':''}">${esc(t.title)}</div>
-        <div class="tps">${t.type==='daily'?'<span class="pill pi-t">日次</span>':'<span class="pill pi-t">マイルストーン</span>'}
-          ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}${t.deadline?dlP(t.deadline):''}
-        </div>${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}</div>
-      </div>`;
-    });
-    html+='</div></div>';
-  }
+
   el.innerHTML=html;
 }
-function togDT(mid,tid,val){const d=gmd(mid);d.dailyDone=d.dailyDone||{};d.dailyDone[tid+':'+td()]=val;smd(mid,d);renderDaily(mid);}
+function togDT(mid,tid,dateKey,val){
+  const d=gmd(mid);d.dailyDone=d.dailyDone||{};
+  d.dailyDone[tid+':'+(dateKey||td())]=val;
+  smd(mid,d);renderDaily(mid);
+}
 
 // ===== SHIFT =====
 function renderShift(mid){
@@ -1209,24 +1264,59 @@ function copyTask(id){
 function delTask(id){if(!confirm('このタスクを削除しますか？'))return;const ad=gad();ad.tasks=(ad.tasks||[]).filter(t=>t.id!==id);sad(ad);renderTasks();}
 function renderTasks(){
   const el=document.getElementById('a-tl');if(!el)return;
-  const ad=gad(),tasks=(ad.tasks||[]).filter(t=>aTM==='all'||t.member===aTM||t.member==='all');
-  if(!tasks.length){el.innerHTML='<div class="nd">タスクはありません</div>';return;}
-  let html='<div class="sc"><div class="sb op" style="border-top:none">';
-  tasks.slice().reverse().forEach(t=>{
+  const ad=gad();
+  const allTasks=(ad.tasks||[]).filter(t=>aTM==='all'||t.member===aTM||t.member==='all');
+  if(!allTasks.length){el.innerHTML='<div class="nd">タスクはありません</div>';return;}
+  const today=td();
+
+  // group by date for history view
+  // For admin: show all tasks, mark completed ones
+  // Check completion: a task is "done" if ANY member completed it today (or its deadline date)
+  const tasks=allTasks.slice().reverse();
+
+  let html='';
+  // Summary line
+  const totalCount=tasks.length;
+  const overdueCount=tasks.filter(t=>t.deadline&&t.deadline<today).length;
+  html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <span style="font-size:13px;color:var(--tx2)">全 ${totalCount}件</span>
+    ${overdueCount?`<span style="font-size:12px;color:var(--rd);font-weight:600">期限切れ ${overdueCount}件</span>`:''}
+  </div>`;
+
+  html+='<div class="sc"><div class="sb op" style="border-top:none">';
+  tasks.forEach(t=>{
     const ml=t.member==='all'?'全員':getDN(t.member)||MB.find(m=>m.id===t.member)?.name||t.member;
-    html+=`<div class="tr"><div class="tb"><div class="tt">${esc(t.title)}</div>
-      <div class="tps"><span class="pill pi-a">${ml}</span><span class="pill pi-t">${t.type==='daily'?'日次':'マイルストーン'}</span>
-        ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
-        ${t.company?`<span class="pill" style="background:var(--bll);color:var(--bl)">${esc(t.company)}</span>`:''}
-        ${t.deadline?dlP(t.deadline):''}
-      </div>${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
-      <div style="font-size:11px;color:var(--tx3);margin-top:3px">追加: ${t.createdAt}</div>
-    </div>
-    <div style="display:flex;gap:4px;flex-shrink:0">
-      <button class="btn btn-xs" onclick="openTaskEdit('${t.id}')">編集</button>
-      <button class="btn btn-xs" onclick="copyTask('${t.id}')" title="コピーして複製">複製</button>
-      <button class="btn btn-xs btn-d" onclick="delTask('${t.id}')">削除</button>
-    </div></div>`;
+    const checkDate=t.deadline||today;
+    const isPast=t.deadline&&t.deadline<today;
+    // Check if any relevant member completed it
+    const relevantMembers=t.member==='all'?MB.map(m=>m.id):[t.member];
+    const completedBy=relevantMembers.filter(mid=>{
+      const md=gmd(mid);
+      return (md.dailyDone||{})[t.id+':'+checkDate];
+    });
+    const isDone=completedBy.length>0;
+    const completedNames=completedBy.map(mid=>getDN(mid)||mid).join('、');
+
+    html+=`<div class="tr" style="${isPast&&!isDone?'background:var(--rdl)':''}${isDone?'opacity:0.7':''}">
+      <div class="tb">
+        <div class="tt" style="${isDone?'text-decoration:line-through;color:var(--tx3)':''}">${esc(t.title)}</div>
+        <div class="tps">
+          <span class="pill pi-a">${ml}</span>
+          <span class="pill pi-t">${t.type==='daily'?'日次':'マイルストーン'}</span>
+          ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
+          ${t.company?`<span class="pill" style="background:var(--bll);color:var(--bl)">${esc(t.company)}</span>`:''}
+          ${t.deadline?dlP(t.deadline):''}
+          ${isDone?`<span class="pill" style="background:var(--acl);color:var(--ac)">✓ ${completedNames}完了</span>`:''}
+        </div>
+        ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
+        <div style="font-size:11px;color:var(--tx3);margin-top:3px">追加: ${t.createdAt}${t.updatedAt?` / 更新: ${t.updatedAt}`:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-xs" onclick="openTaskEdit('${t.id}')">編集</button>
+        <button class="btn btn-xs" onclick="copyTask('${t.id}')" title="コピーして複製">複製</button>
+        <button class="btn btn-xs btn-d" onclick="delTask('${t.id}')">削除</button>
+      </div>
+    </div>`;
   });
   html+='</div></div>';el.innerHTML=html;
 }
