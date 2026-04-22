@@ -270,6 +270,20 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
   </div>
 </div>
 
+<!-- MEMBER TASK ADD MODAL -->
+<div class="modal-bg" id="mt-modal">
+  <div class="modal">
+    <h2 id="mt-modal-title">タスクを追加</h2>
+    <div class="field"><label>タスクタイトル</label><input type="text" id="mt-ti" placeholder="例：資料を作成する" onkeydown="if(event.key==='Enter')document.getElementById('mt-dl').focus()"></div>
+    <div class="field"><label>期限（任意）</label><input type="date" id="mt-dl"></div>
+    <div class="field"><label>詳細・メモ（任意）</label><textarea id="mt-de" placeholder="補足や詳細…"></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveMemberTask()" style="flex:1">追加</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('mt-modal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHIFT SLOT EDIT MODAL -->
 <div class="modal-bg" id="se-modal">
   <div class="modal">
@@ -344,7 +358,13 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <div id="m-sg"></div>
     <div class="ca"><h3>コメント・相談メモ</h3><textarea id="m-cmt" placeholder="困っていること、気になること…" oninput="saveCom()"></textarea><p class="as" id="m-ind">自動保存されます</p></div>
   </div>
-  <div class="tp" id="t-m-daily"><div class="sec">今日のタスク</div><div id="m-dl"></div></div>
+  <div class="tp" id="t-m-daily">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="sec" style="margin:0">タスク</div>
+      <button class="btn btn-sm btn-ac" onclick="openMemberTaskModal()">＋ タスクを追加</button>
+    </div>
+    <div id="m-dl"></div>
+  </div>
   <div class="tp" id="t-m-shift">
     <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <button class="btn btn-xs btn-g" onclick="shiftMonthStep(-1)">◀</button>
@@ -851,8 +871,8 @@ function renderDaily(mid){
   const el=document.getElementById('m-dl');if(!el)return;
   const ad=gad(),today=td();
   const allTasks=(ad.tasks||[]).filter(t=>t.member===mid||t.member==='all');
-  if(!allTasks.length){el.innerHTML='<div class="nd">管理者からタスクが割り当てられていません</div>';return;}
   const data=gmd(mid),done=data.dailyDone||{};
+  const memberTasks=data.memberTasks||[];
 
   // Collect unique dates: today + future deadlines (ungrouped = today)
   // Group tasks by date: tasks with deadline show on that day, tasks without deadline show today
@@ -928,11 +948,98 @@ function renderDaily(mid){
     html+=`</div></div></div>`;
   });
 
-  if(!hasAnyVisible){
-    html='<div style="text-align:center;padding:32px;color:var(--ac)"><div style="font-size:24px;margin-bottom:8px">🎉</div><div style="font-size:14px;font-weight:600">今日のタスクはすべて完了しました！</div></div>';
+  if(!hasAnyVisible&&!allTasks.length){
+    html='<div class="nd">管理者からタスクが割り当てられていません</div>';
+  } else if(!hasAnyVisible){
+    html='<div style="text-align:center;padding:24px;color:var(--ac)"><div style="font-size:24px;margin-bottom:8px">🎉</div><div style="font-size:14px;font-weight:600">管理者タスクはすべて完了！</div></div>';
+  }
+
+  // ---- 自分で追加したタスク ----
+  const incompleteMT=memberTasks.filter(t=>!t.done);
+  const doneMT=memberTasks.filter(t=>t.done);
+  if(memberTasks.length){
+    html+=`<div style="margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:8px;padding-bottom:6px;border-bottom:1.5px solid var(--bd2)">
+        📝 自分のタスク（${incompleteMT.length}件未完了）
+      </div>`;
+    // incomplete first
+    incompleteMT.forEach(t=>{
+      html+=`<div class="tr">
+        <input type="checkbox" onchange="togMemberTask('${mid}','${t.id}',this.checked)">
+        <div class="tb">
+          <div class="tt">${esc(t.title)}</div>
+          <div class="tps">
+            ${t.deadline?dlP(t.deadline,false):''}
+            <span class="pill" style="background:var(--sf2);color:var(--tx2)">自分追加</span>
+          </div>
+          ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-xs" onclick="openMemberTaskModal('${t.id}')">編集</button>
+          <button class="btn btn-xs btn-d" onclick="delMemberTask('${mid}','${t.id}')">削除</button>
+        </div>
+      </div>`;
+    });
+    // completed (collapsed)
+    if(doneMT.length){
+      html+=`<details style="margin-top:8px"><summary style="font-size:12px;color:var(--tx3);cursor:pointer;padding:4px 0">完了済み（${doneMT.length}件）</summary><div>`;
+      doneMT.forEach(t=>{
+        html+=`<div class="tr" style="opacity:0.6">
+          <input type="checkbox" checked onchange="togMemberTask('${mid}','${t.id}',this.checked)">
+          <div class="tb">
+            <div class="tt dn">${esc(t.title)}</div>
+            ${t.doneAt?`<div style="font-size:11px;color:var(--ac)">完了: ${t.doneAt}</div>`:''}
+          </div>
+          <button class="btn btn-xs btn-d" onclick="delMemberTask('${mid}','${t.id}')">削除</button>
+        </div>`;
+      });
+      html+=`</div></details>`;
+    }
+    html+=`</div>`;
+  } else if(!allTasks.length){
+    html+='<div style="text-align:center;padding:16px;color:var(--tx3);font-size:12px">「＋ タスクを追加」から自分のタスクを登録できます</div>';
   }
 
   el.innerHTML=html;
+}
+function openMemberTaskModal(editId){
+  const mid=CUR?.mid;if(!mid)return;
+  document.getElementById('mt-modal-title').textContent=editId?'タスクを編集':'タスクを追加';
+  document.getElementById('mt-modal').dataset.editId=editId||'';
+  if(editId){
+    const d=gmd(mid);const t=(d.memberTasks||[]).find(x=>x.id===editId);
+    if(t){document.getElementById('mt-ti').value=t.title||'';document.getElementById('mt-dl').value=t.deadline||'';document.getElementById('mt-de').value=t.desc||'';}
+  } else {
+    document.getElementById('mt-ti').value='';document.getElementById('mt-dl').value='';document.getElementById('mt-de').value='';
+  }
+  openModal('mt-modal');
+  setTimeout(()=>document.getElementById('mt-ti')?.focus(),50);
+}
+function saveMemberTask(){
+  const mid=CUR?.mid;if(!mid)return;
+  const title=document.getElementById('mt-ti').value.trim();
+  if(!title){alert('タイトルを入力してください');return;}
+  const deadline=document.getElementById('mt-dl').value;
+  const desc=document.getElementById('mt-de').value.trim();
+  const editId=document.getElementById('mt-modal').dataset.editId;
+  const d=gmd(mid);d.memberTasks=d.memberTasks||[];
+  if(editId){
+    const idx=d.memberTasks.findIndex(x=>x.id===editId);
+    if(idx>=0) d.memberTasks[idx]={...d.memberTasks[idx],title,deadline,desc};
+  } else {
+    d.memberTasks.push({id:'mt'+Date.now(),title,deadline,desc,createdAt:new Date().toLocaleString('ja-JP')});
+  }
+  smd(mid,d);closeModal('mt-modal');renderDaily(mid);
+}
+function delMemberTask(mid,id){
+  if(!confirm('このタスクを削除しますか？'))return;
+  const d=gmd(mid);d.memberTasks=(d.memberTasks||[]).filter(x=>x.id!==id);smd(mid,d);renderDaily(mid);
+}
+function togMemberTask(mid,id,val){
+  const d=gmd(mid);d.memberTasks=d.memberTasks||[];
+  const t=d.memberTasks.find(x=>x.id===id);
+  if(t){t.done=val;if(val)t.doneAt=new Date().toLocaleDateString('ja-JP');else delete t.doneAt;}
+  smd(mid,d);renderDaily(mid);
 }
 function togDT(mid,tid,dateKey,val){
   const d=gmd(mid);d.dailyDone=d.dailyDone||{};
