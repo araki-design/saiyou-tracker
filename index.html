@@ -350,7 +350,6 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <div class="nav-t on" data-p="t-a-prog">進捗管理</div>
     <div class="nav-t" data-p="t-a-tasks">タスク管理</div>
     <div class="nav-t" data-p="t-a-stg">ステージ編集</div>
-    <div class="nav-t" data-p="t-a-remain">残タスク</div>
     <div class="nav-t" data-p="t-a-coaching">育成分析</div>
     <div class="nav-t" data-p="t-a-res">リソース</div>
     <div class="nav-t" data-p="t-a-monthly">月間レポート</div>
@@ -369,10 +368,18 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
   </div>
   <div class="tp" id="t-a-tasks">
     <!-- mode switcher -->
-    <div style="display:flex;gap:6px;margin-bottom:14px">
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
       <button class="mt on" id="tm-single" onclick="switchTaskMode('single')">1件追加</button>
       <button class="mt" id="tm-bulk" onclick="switchTaskMode('bulk')">まとめて追加</button>
       <button class="mt" id="tm-tmpl" onclick="switchTaskMode('tmpl')">テンプレート</button>
+    </div>
+    <!-- month filter for task list -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 14px;background:var(--sf2);border-radius:var(--r)">
+      <span style="font-size:12px;color:var(--tx2);font-weight:500">表示期間：</span>
+      <button class="btn btn-xs btn-g" onclick="taskMonthStep(-1)">◀</button>
+      <span id="a-task-month-label" style="font-size:13px;font-weight:600;min-width:80px;text-align:center">全期間</span>
+      <button class="btn btn-xs btn-g" onclick="taskMonthStep(1)">▶</button>
+      <button class="btn btn-xs" onclick="aTaskMonth={year:new Date().getFullYear(),month:0};renderTasks()" style="margin-left:4px">全期間</button>
     </div>
 
     <!-- single add -->
@@ -442,7 +449,6 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <div class="mts" id="a-sm"></div>
     <div id="a-sl"></div>
   </div>
-  <div class="tp" id="t-a-remain"><div id="a-remain-content"></div></div>
   <div class="tp" id="t-a-coaching">
     <div class="mts" id="a-coach-mtabs"></div>
     <div id="a-coach-content"></div>
@@ -562,6 +568,7 @@ const DEF_STG=[
 
 // ===== STATE =====
 let CUR=null, aPM='m0', aTM='all', aSM='s1', aCoachMid='m0';
+let aTaskMonth={year:new Date().getFullYear(),month:0}; // 0=全期間
 let aMoMid='m0';
 // shift month state: {member: {year,month}}
 const shiftMonthState={};
@@ -711,7 +718,6 @@ function onSw(pid){
   if(pid==='t-a-monthly'){renderAdminMonthly();}
   if(pid==='t-a-company'){renderCompanyList();refreshAllCoSelects();}
   if(pid==='t-a-data'){renderDataSummary();}
-  if(pid==='t-a-remain'){renderRemain();}
   if(pid==='t-a-coaching'){renderCoaching();}
 }
 function setMT(el,cid){document.getElementById(cid)?.querySelectorAll('.mt').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
@@ -1262,11 +1268,34 @@ function copyTask(id){
   ad.tasks.push(copy);sad(ad);renderTasks();
 }
 function delTask(id){if(!confirm('このタスクを削除しますか？'))return;const ad=gad();ad.tasks=(ad.tasks||[]).filter(t=>t.id!==id);sad(ad);renderTasks();}
+function taskMonthStep(dir){
+  if(aTaskMonth.month===0){
+    // from 全期間, go to current month
+    const n=new Date();
+    aTaskMonth={year:n.getFullYear(),month:n.getMonth()+1+dir};
+  } else {
+    aTaskMonth.month+=dir;
+  }
+  if(aTaskMonth.month>12){aTaskMonth.month=1;aTaskMonth.year++;}
+  if(aTaskMonth.month<1){aTaskMonth.month=12;aTaskMonth.year--;}
+  renderTasks();
+}
 function renderTasks(){
   const el=document.getElementById('a-tl');if(!el)return;
   const ad=gad();
-  const allTasks=(ad.tasks||[]).filter(t=>aTM==='all'||t.member===aTM||t.member==='all');
-  if(!allTasks.length){el.innerHTML='<div class="nd">タスクはありません</div>';return;}
+  // update month label
+  const mlbl=document.getElementById('a-task-month-label');
+  if(mlbl) mlbl.textContent=aTaskMonth.month===0?'全期間':`${aTaskMonth.year}年${aTaskMonth.month}月`;
+  let allTasks=(ad.tasks||[]).filter(t=>aTM==='all'||t.member===aTM||t.member==='all');
+  // filter by month if set
+  if(aTaskMonth.month!==0){
+    const prefix=`${aTaskMonth.year}-${String(aTaskMonth.month).padStart(2,'0')}`;
+    allTasks=allTasks.filter(t=>{
+      if(!t.deadline) return true; // no deadline = always show
+      return t.deadline.startsWith(prefix);
+    });
+  }
+  if(!allTasks.length){el.innerHTML='<div class="nd">この期間のタスクはありません</div>';return;}
   const today=td();
 
   // group by date for history view
@@ -1913,10 +1942,12 @@ function renderAdminMonthly(){
 function checkOverdue(mid){
   const ad=gad(),today=td();
   const tasks=(ad.tasks||[]).filter(t=>t.member===mid||t.member==='all');
+  const data=gmd(mid),done=data.dailyDone||{};
   const overdue=tasks.filter(t=>{
     if(!t.deadline||t.deadline>=today)return false;
-    const data=gmd(mid);
-    return !(data.dailyDone||{})[t.id+':'+today];
+    // task is completed if checked on its deadline date OR today
+    const checkDate=t.deadline;
+    return !done[t.id+':'+checkDate]&&!done[t.id+':'+today];
   });
   const banner=document.getElementById('overdue-banner');
   const txt=document.getElementById('overdue-text');
@@ -2009,7 +2040,7 @@ function renderRemain(){
 function tog(bid,cid){const b=document.getElementById(bid),c=document.getElementById(cid);if(!b||!c)return;const o=b.classList.toggle('op');c.classList.toggle('op',o);}
 function sp(s,chk){const d=s.tasks.filter((_,i)=>chk[s.id+':'+i]===true).length,t=s.tasks.length;return{d,t,p:t>0?Math.round(d/t*100):0};}
 function sh(n,l){return`<div class="st"><div class="sn">${n}</div><div class="sl">${l}</div></div>`}
-function dlP(dl){const today=td(),diff=Math.ceil((new Date(dl)-new Date(today))/864e5);let cls='pi-ok',txt=`納期: ${dl}`;if(diff<0){cls='pi-ov';txt=`超過: ${dl}`;}else if(diff<=3){cls='pi-w';txt=`残${diff}日`;}return `<span class="pill ${cls}">${txt}</span>`;}
+function dlP(dl,done){const today=td(),diff=Math.ceil((new Date(dl)-new Date(today))/864e5);if(done)return`<span class="pill" style="background:var(--acl);color:var(--ac)">✓ 完了済</span>`;let cls='pi-ok',txt=`納期: ${dl}`;if(diff<0){cls='pi-ov';txt=`超過: ${dl}`;}else if(diff<=3){cls='pi-w';txt=`残${diff}日`;}return `<span class="pill ${cls}">${txt}</span>`;}
 function td(){return new Date().toISOString().slice(0,10)}
 function fd(s){const d=new Date(s);return`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`}
 function fs(s){const d=new Date(s);return`${d.getMonth()+1}/${d.getDate()}`}
