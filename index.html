@@ -902,7 +902,7 @@ function renderDaily(mid){
             ${t.type==='daily'?'<span class="pill pi-t">日次</span>':'<span class="pill pi-t">マイルストーン</span>'}
             ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
             ${t.company?`<span class="pill pi-a">${esc(t.company)}</span>`:''}
-            ${t.deadline?dlP(t.deadline):''}
+            ${t.deadline?dlP(t.deadline,!!(done[t.id+':'+checkDate])):''}
           </div>
           ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
         </div>
@@ -1334,7 +1334,7 @@ function renderTasks(){
           <span class="pill pi-t">${t.type==='daily'?'日次':'マイルストーン'}</span>
           ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
           ${t.company?`<span class="pill" style="background:var(--bll);color:var(--bl)">${esc(t.company)}</span>`:''}
-          ${t.deadline?dlP(t.deadline):''}
+          ${t.deadline?dlP(t.deadline,isDone):''}
           ${isDone?`<span class="pill" style="background:var(--acl);color:var(--ac)">✓ ${completedNames}完了</span>`:''}
         </div>
         ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
