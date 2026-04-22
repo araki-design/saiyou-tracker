@@ -302,6 +302,24 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
   </div>
 </div>
 
+<!-- WORK MASTER MODAL -->
+<div class="modal-bg" id="wm-modal">
+  <div class="modal">
+    <h2 id="wm-modal-title">業務を追加</h2>
+    <input type="hidden" id="wm-company">
+    <input type="hidden" id="wm-edit-idx">
+    <div class="field"><label>業務名</label><input type="text" id="wm-name" placeholder="例：面接対応"></div>
+    <div class="field"><label>上限時間（分）</label>
+      <input type="number" id="wm-max" placeholder="例：120（=2時間）" min="0" max="1440">
+      <p style="font-size:11px;color:var(--tx3);margin-top:4px">0または空欄 = 制限なし</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-p btn-sm" onclick="saveWorkMaster()" style="flex:1">保存</button>
+      <button class="btn btn-sm btn-g" onclick="closeModal('wm-modal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- MEMBER APP -->
 <div id="pg-member" class="app">
 <nav class="nav">
@@ -338,6 +356,8 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     </div>
     <div id="m-shift-summary" style="margin-bottom:12px"></div>
     <div id="m-sl"></div>
+    <div class="sec" style="margin-top:20px">業務別平均時間</div>
+    <div id="m-work-avg"></div>
   </div>
 </div>
 </div>
@@ -464,11 +484,16 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <div id="a-mo-content"></div>
   </div>
   <div class="tp" id="t-a-company">
-    <p style="font-size:13px;color:var(--tx2);margin-bottom:16px">会社マスタを管理します。メンバーのシフト・タスクで選択できるようになります。</p>
-    <div class="tf" style="display:flex;gap:8px;align-items:flex-end;padding:14px 16px">
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:16px">会社・業務マスタを管理します。メンバーのシフト入力時に選択リストとして表示されます。</p>
+
+    <div class="sec" style="margin-top:0">会社を追加</div>
+    <div class="tf" style="display:flex;gap:8px;align-items:flex-end;padding:14px 16px;margin-bottom:16px">
       <div class="field" style="flex:1;margin:0"><label>会社名</label><input type="text" id="co-name" placeholder="例：株式会社〇〇" onkeydown="if(event.key==='Enter')addCompany()"></div>
       <button class="btn btn-p btn-sm" onclick="addCompany()" style="flex-shrink:0">追加</button>
     </div>
+
+    <div class="sec">会社・業務マスタ一覧</div>
+    <p style="font-size:12px;color:var(--tx3);margin-bottom:10px">会社を選んで業務を追加できます。業務ごとに上限時間（分）を設定してください。</p>
     <div id="a-co-list"></div>
   </div>
   <div class="tp" id="t-a-members">
@@ -963,30 +988,33 @@ function renderShift(mid){
             <button class="btn btn-xs btn-d" onclick="delSl('${mid}','${day}',${i})">削除</button>
           </div>`;
         }).join('')}
-        <div class="sa" style="align-items:flex-end;gap:6px">
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-size:11px;color:var(--tx2)">開始</span>
-            <input type="time" id="si-${day}-s" value="09:00" style="width:100px">
+        <div style="margin-top:10px;padding:10px;background:var(--sf2);border-radius:var(--r)">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px">シフトを追加</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:11px;color:var(--tx2)">会社</span>
+              <select id="si-${day}-co-sel" onchange="onShiftCoChange('${day}')" style="padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit;min-width:130px"><option value="">選択…</option></select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:11px;color:var(--tx2)">業務</span>
+              <select id="si-${day}-w-sel" onchange="onShiftWorkChange('${day}')" style="padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit;min-width:130px"><option value="">選択…</option></select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:11px;color:var(--tx2)">開始</span>
+              <input type="time" id="si-${day}-s" value="09:00" style="width:100px;padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
+            </div>
+            <span style="font-size:12px;color:var(--tx2);padding-bottom:8px">〜</span>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:11px;color:var(--tx2)">終了</span>
+              <input type="time" id="si-${day}-e" value="18:00" style="width:100px;padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:11px;color:var(--tx2)">休憩（分）</span>
+              <input type="number" id="si-${day}-b" value="0" min="0" max="480" style="width:70px;padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
+            </div>
+            <button class="btn btn-sm btn-p" onclick="addSl('${mid}','${day}')" style="align-self:flex-end">追加</button>
           </div>
-          <span style="font-size:12px;color:var(--tx2);padding-bottom:8px">〜</span>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-size:11px;color:var(--tx2)">終了</span>
-            <input type="time" id="si-${day}-e" value="18:00" style="width:100px">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-size:11px;color:var(--tx2)">休憩（分）</span>
-            <input type="number" id="si-${day}-b" value="0" min="0" max="480" style="width:70px;padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:100px">
-            <span style="font-size:11px;color:var(--tx2)">業務内容</span>
-            <input type="text" placeholder="例：面接対応" id="si-${day}-w" style="flex:1">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px;min-width:110px">
-            <span style="font-size:11px;color:var(--tx2)">会社</span>
-            <select id="si-${day}-co-sel" onchange="syncCoSel('${day}')" style="padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit"><option value="">選択…</option></select>
-            <input type="text" id="si-${day}-co" placeholder="直接入力もOK" style="padding:6px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit;margin-top:2px">
-          </div>
-          <button class="btn btn-sm btn-p" onclick="addSl('${mid}','${day}')" style="align-self:flex-end">追加</button>
+          <div id="si-${day}-hint" style="font-size:11px;color:var(--am);margin-top:6px;display:none"></div>
         </div>
         <div style="margin-top:10px;padding-top:8px;border-top:0.5px solid var(--bd)">
           <button class="btn btn-xs btn-d" onclick="delDay('${mid}','${day}')">この日付を削除</button>
@@ -995,10 +1023,16 @@ function renderShift(mid){
     </div>`;
   });
   el.innerHTML=html;
+  renderWorkAvg(mid,'m-work-avg');
   // populate company selects in each day's form
   Object.keys(shifts).filter(d=>d.startsWith(prefix)).forEach(day=>{
     const sel=document.getElementById('si-'+day+'-co-sel');
     if(sel){const cos=getCompanies();sel.innerHTML='<option value="">選択…</option>'+cos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
+  });
+  // populate work selects for pre-selected companies
+  Object.keys(shifts).filter(d=>d.startsWith(prefix)).forEach(day=>{
+    const coSel=document.getElementById('si-'+day+'-co-sel');
+    if(coSel&&coSel.value) populateWorkSelect(day,coSel.value);
   });
 }
 let seEditMid=null,seEditDay=null,seEditIdx=null;
@@ -1016,10 +1050,19 @@ function addDay(){
 function addSl(mid,day){
   const s=document.getElementById('si-'+day+'-s')?.value;
   const e=document.getElementById('si-'+day+'-e')?.value;
-  const w=document.getElementById('si-'+day+'-w')?.value?.trim();
+  const wSel=document.getElementById('si-'+day+'-w-sel')?.value;
   const b=parseInt(document.getElementById('si-'+day+'-b')?.value||'0',10)||0;
-  const co=document.getElementById('si-'+day+'-co')?.value||'';
-  if(!s||!e||!w){alert('すべて入力してください');return;}
+  const co=document.getElementById('si-'+day+'-co-sel')?.value||'';
+  const w=wSel||'';
+  if(!s||!e||!co){alert('会社を選択してください');return;}
+  if(!w){alert('業務を選択してください');return;}
+  // check max time
+  const netMin=calcM(s,e,b);
+  const wm=getWorkMasters(co).find(x=>x.name===w);
+  if(wm&&wm.max>0&&netMin>wm.max){
+    alert('上限時間を超えています！ 「'+w+'」の上限は'+wm.max+'分（'+(wm.max/60).toFixed(1)+'h）です。 入力値：'+netMin+'分（'+(netMin/60).toFixed(1)+'h）');
+    return;
+  }
   const d=gmd(mid);d.shifts=d.shifts||{};d.shifts[day]=d.shifts[day]||[];
   d.shifts[day].push({start:s,end:e,work:w,brk:b,company:co});
   smd(mid,d);renderShift(mid);
@@ -1301,7 +1344,13 @@ function renderTasks(){
   // group by date for history view
   // For admin: show all tasks, mark completed ones
   // Check completion: a task is "done" if ANY member completed it today (or its deadline date)
-  const tasks=allTasks.slice().reverse();
+  // sort by deadline (earliest first, no deadline last)
+  const tasks=allTasks.slice().sort((a,b)=>{
+    if(!a.deadline&&!b.deadline)return 0;
+    if(!a.deadline)return 1;
+    if(!b.deadline)return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
 
   let html='';
   // Summary line
@@ -1788,6 +1837,85 @@ function parseJaDate(s){
   return new Date(s);
 }
 
+// ===== WORK MASTER =====
+function getWorkMasters(company){
+  const ad=gad();
+  const masters=ad.workMasters||{};
+  return masters[company]||[];
+}
+function saveWorkMasters(company,list){
+  const ad=gad();
+  ad.workMasters=ad.workMasters||{};
+  ad.workMasters[company]=list;
+  sad(ad);
+}
+function openAddWork(company){
+  document.getElementById('wm-company').value=company;
+  document.getElementById('wm-edit-idx').value='';
+  document.getElementById('wm-modal-title').textContent='業務を追加 — '+company;
+  document.getElementById('wm-name').value='';
+  document.getElementById('wm-max').value='';
+  openModal('wm-modal');
+  setTimeout(()=>document.getElementById('wm-name')?.focus(),50);
+}
+function openEditWork(company,idx){
+  const wm=getWorkMasters(company)[idx];if(!wm)return;
+  document.getElementById('wm-company').value=company;
+  document.getElementById('wm-edit-idx').value=idx;
+  document.getElementById('wm-modal-title').textContent='業務を編集 — '+company;
+  document.getElementById('wm-name').value=wm.name||'';
+  document.getElementById('wm-max').value=wm.max||'';
+  openModal('wm-modal');
+  setTimeout(()=>document.getElementById('wm-name')?.focus(),50);
+}
+function saveWorkMaster(){
+  const co=document.getElementById('wm-company').value;
+  const name=document.getElementById('wm-name').value.trim();
+  const max=parseInt(document.getElementById('wm-max').value||'0',10)||0;
+  if(!name){alert('業務名を入力してください');return;}
+  const list=getWorkMasters(co);
+  const editIdx=document.getElementById('wm-edit-idx').value;
+  if(editIdx!==''){list[parseInt(editIdx)]={name,max};}
+  else{list.push({name,max});}
+  saveWorkMasters(co,list);
+  closeModal('wm-modal');
+  renderCompanyList();
+  // refresh all work selects
+  document.querySelectorAll('[id$="-w-sel"]').forEach(sel=>{
+    const day=sel.id.replace('si-','').replace('-w-sel','');
+    const coSel=document.getElementById('si-'+day+'-co-sel');
+    if(coSel&&coSel.value===co) populateWorkSelect(day,co);
+  });
+}
+function delWork(company,idx){
+  if(!confirm('この業務を削除しますか？'))return;
+  const list=getWorkMasters(company);
+  list.splice(idx,1);
+  saveWorkMasters(company,list);
+  renderCompanyList();
+}
+function populateWorkSelect(day,company){
+  const sel=document.getElementById('si-'+day+'-w-sel');if(!sel)return;
+  const wms=getWorkMasters(company);
+  sel.innerHTML='<option value="">業務を選択…</option>'+wms.map(w=>`<option value="${esc(w.name)}">${esc(w.name)}${w.max>0?' (上限'+(w.max/60).toFixed(1)+'h)':''}</option>`).join('');
+}
+function onShiftCoChange(day){
+  const co=document.getElementById('si-'+day+'-co-sel')?.value||'';
+  populateWorkSelect(day,co);
+  const hint=document.getElementById('si-'+day+'-hint');
+  if(hint) hint.style.display='none';
+}
+function onShiftWorkChange(day){
+  const co=document.getElementById('si-'+day+'-co-sel')?.value||'';
+  const w=document.getElementById('si-'+day+'-w-sel')?.value||'';
+  const wm=getWorkMasters(co).find(x=>x.name===w);
+  const hint=document.getElementById('si-'+day+'-hint');
+  if(hint){
+    if(wm&&wm.max>0){hint.textContent='上限: '+(wm.max/60).toFixed(1)+'h（'+wm.max+'分）';hint.style.display='';}
+    else{hint.style.display='none';}
+  }
+}
+
 // ===== COMPANY MANAGEMENT =====
 function addCompany(){
   const nm=document.getElementById('co-name')?.value?.trim();
@@ -1806,13 +1934,30 @@ function delCompany(nm){
 function renderCompanyList(){
   const el=document.getElementById('a-co-list');if(!el)return;
   const cos=getCompanies();
-  if(!cos.length){el.innerHTML='<div class="nd">まだ会社が登録されていません</div>';return;}
-  let html='<div class="sc"><div class="sb op" style="border-top:none">';
+  if(!cos.length){el.innerHTML='<div class="nd">まだ会社が登録されていません<br><small>上の「会社を追加」から追加してください</small></div>';return;}
+  let html='';
   cos.forEach(c=>{
-    html+=`<div class="tr"><div class="tb"><div class="tt">${esc(c)}</div></div>
-      <button class="btn btn-xs btn-d" onclick="delCompany('${esc(c)}')">削除</button></div>`;
+    const wms=getWorkMasters(c);
+    html+=`<div class="sc" style="margin-bottom:12px">
+      <div class="sh2" onclick="tog('wm-${c.replace(/[^a-zA-Z0-9]/g,'_')}','wmc-${c.replace(/[^a-zA-Z0-9]/g,'_')}')">
+        <span style="font-size:14px;font-weight:600;flex:1">${esc(c)}</span>
+        <span style="font-size:12px;color:var(--tx2);margin-right:8px">業務 ${wms.length}件</span>
+        <button class="btn btn-xs btn-ac" onclick="event.stopPropagation();openAddWork('${esc(c)}')" style="margin-right:6px">＋ 業務追加</button>
+        <button class="btn btn-xs btn-d" onclick="event.stopPropagation();delCompany('${esc(c)}')">会社削除</button>
+        <span class="chv" id="wmc-${c.replace(/[^a-zA-Z0-9]/g,'_')}">▼</span>
+      </div>
+      <div class="sb" id="wm-${c.replace(/[^a-zA-Z0-9]/g,'_')}">
+        ${wms.length?wms.map((w,i)=>`<div class="si-row">
+          <div style="flex:1"><div class="si-name">${esc(w.name)}</div>
+            <div class="si-det">上限: ${w.max>0?(w.max/60).toFixed(1)+'h（'+w.max+'分）':'制限なし'}</div>
+          </div>
+          <button class="btn btn-xs" onclick="openEditWork('${esc(c)}',${i})">編集</button>
+          <button class="btn btn-xs btn-d" onclick="delWork('${esc(c)}',${i})">削除</button>
+        </div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px">業務がまだ登録されていません</div>'}
+      </div>
+    </div>`;
   });
-  html+='</div></div>';el.innerHTML=html;
+  el.innerHTML=html;
 }
 
 // ===== MONTHLY REPORT (Member) =====
@@ -2033,6 +2178,48 @@ function renderRemain(){
     html+=`</div>`;
   });
 
+  el.innerHTML=html;
+}
+
+// ===== WORK AVERAGE =====
+function calcWorkAvg(mid){
+  const data=gmd(mid),shifts=data.shifts||{};
+  const byWork={};
+  Object.values(shifts).forEach(slots=>{
+    (slots||[]).forEach(sl=>{
+      const key=(sl.company?sl.company+' / ':'')+sl.work;
+      if(!byWork[key])byWork[key]={total:0,count:0,max:0};
+      const m=calcM(sl.start,sl.end,sl.brk||0);
+      byWork[key].total+=m;byWork[key].count++;
+      if(m>byWork[key].max)byWork[key].max=m;
+    });
+  });
+  return Object.entries(byWork).map(([k,v])=>({
+    key:k,avg:v.total/v.count,total:v.total,count:v.count,max:v.max
+  })).sort((a,b)=>b.total-a.total);
+}
+function renderWorkAvg(mid,containerId){
+  const el=document.getElementById(containerId);if(!el)return;
+  const avgs=calcWorkAvg(mid);
+  if(!avgs.length){el.innerHTML='<div class="nd">データがありません</div>';return;}
+  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html+='<tr style="background:var(--sf2)"><th style="padding:8px;text-align:left;border-bottom:1px solid var(--bd)">業務</th><th style="padding:8px;text-align:right;border-bottom:1px solid var(--bd)">平均</th><th style="padding:8px;text-align:right;border-bottom:1px solid var(--bd)">最大</th><th style="padding:8px;text-align:right;border-bottom:1px solid var(--bd)">合計</th><th style="padding:8px;text-align:right;border-bottom:1px solid var(--bd)">回数</th></tr>';
+  avgs.forEach(a=>{
+    // check if over limit
+    const parts=a.key.split(' / ');
+    const co=parts.length>1?parts[0]:'';
+    const work=parts.length>1?parts[1]:parts[0];
+    const wm=co?getWorkMasters(co).find(x=>x.name===work):null;
+    const overLimit=wm&&wm.max>0&&a.avg>wm.max;
+    html+=`<tr style="${overLimit?'background:var(--rdl)':''}border-bottom:0.5px solid var(--bd)">
+      <td style="padding:7px 8px">${esc(a.key)}${overLimit?'<span style="color:var(--rd);font-size:10px;margin-left:4px">⚠️ 平均超過</span>':''}</td>
+      <td style="padding:7px 8px;text-align:right;font-weight:600;color:${overLimit?'var(--rd)':'var(--tx)'}">${(a.avg/60).toFixed(1)}h</td>
+      <td style="padding:7px 8px;text-align:right;color:var(--tx2)">${(a.max/60).toFixed(1)}h</td>
+      <td style="padding:7px 8px;text-align:right;color:var(--tx2)">${(a.total/60).toFixed(1)}h</td>
+      <td style="padding:7px 8px;text-align:right;color:var(--tx2)">${a.count}回</td>
+    </tr>`;
+  });
+  html+='</table></div>';
   el.innerHTML=html;
 }
 
