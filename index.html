@@ -370,8 +370,6 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <div class="nav-t on" data-p="t-a-prog">進捗管理</div>
     <div class="nav-t" data-p="t-a-tasks">タスク管理</div>
     <div class="nav-t" data-p="t-a-stg">ステージ編集</div>
-    <div class="nav-t" data-p="t-a-coaching">育成分析</div>
-    <div class="nav-t" data-p="t-a-res">リソース</div>
     <div class="nav-t" data-p="t-a-monthly">月間レポート</div>
     <div class="nav-t" data-p="t-a-company">会社管理</div>
     <div class="nav-t" data-p="t-a-members">メンバー管理</div>
@@ -469,11 +467,6 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
     <div class="mts" id="a-sm"></div>
     <div id="a-sl"></div>
   </div>
-  <div class="tp" id="t-a-coaching">
-    <div class="mts" id="a-coach-mtabs"></div>
-    <div id="a-coach-content"></div>
-  </div>
-  <div class="tp" id="t-a-res"><div id="a-rc"></div></div>
   <div class="tp" id="t-a-monthly">
     <div class="mts" id="a-mo-mtabs"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -736,14 +729,12 @@ function initTabs(cid,appId){
 function onSw(pid){
   if(pid==='t-m-daily'&&CUR?.mid)renderDaily(CUR.mid);
   if(pid==='t-m-shift'&&CUR?.mid)renderShift(CUR.mid);
-  if(pid==='t-a-res')renderRes();
   if(pid==='t-a-tasks')renderTasks();
   if(pid==='t-a-stg')renderStgEdit();
   if(pid==='t-a-members'){renderMemberList();}
   if(pid==='t-a-monthly'){renderAdminMonthly();}
   if(pid==='t-a-company'){renderCompanyList();refreshAllCoSelects();}
   if(pid==='t-a-data'){renderDataSummary();}
-  if(pid==='t-a-coaching'){renderCoaching();}
 }
 function setMT(el,cid){document.getElementById(cid)?.querySelectorAll('.mt').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 
@@ -1056,12 +1047,21 @@ function addSl(mid,day){
   const w=wSel||'';
   if(!s||!e||!co){alert('会社を選択してください');return;}
   if(!w){alert('業務を選択してください');return;}
-  // check max time
+  // check max time (1日の合計で制限)
   const netMin=calcM(s,e,b);
   const wm=getWorkMasters(co).find(x=>x.name===w);
-  if(wm&&wm.max>0&&netMin>wm.max){
-    alert('上限時間を超えています！ 「'+w+'」の上限は'+wm.max+'分（'+(wm.max/60).toFixed(1)+'h）です。 入力値：'+netMin+'分（'+(netMin/60).toFixed(1)+'h）');
-    return;
+  if(wm&&wm.max>0){
+    const dData=gmd(mid);
+    const existingSlots=((dData.shifts||{})[day])||[];
+    const alreadyMin=existingSlots.reduce(function(a,sl){
+      return (sl.company===co&&sl.work===w)?a+calcM(sl.start,sl.end,sl.brk||0):a;
+    },0);
+    const totalMin=alreadyMin+netMin;
+    if(totalMin>wm.max){
+      const remainMin=Math.max(0,wm.max-alreadyMin);
+      alert('1日の上限を超えます！ 「'+w+'」の1日上限は'+wm.max+'分（'+(wm.max/60).toFixed(1)+'h）です。 本日すでに'+alreadyMin+'分入力済み。残り'+(remainMin)+'分（'+(remainMin/60).toFixed(1)+'h）まで入力できます。');
+      return;
+    }
   }
   const d=gmd(mid);d.shifts=d.shifts||{};d.shifts[day]=d.shifts[day]||[];
   d.shifts[day].push({start:s,end:e,work:w,brk:b,company:co});
@@ -1114,9 +1114,6 @@ function initAdmin(){
   if(moLbl) moLbl.textContent=`${adminMonthState.year}年${adminMonthState.month}月`;
   // init company selects
   refreshAllCoSelects();
-  // coaching tabs
-  const ct=document.getElementById('a-coach-mtabs');
-  if(ct) ct.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aCoachMid='${m.id}';renderCoaching();setMT(this,'a-coach-mtabs')">${getDN(m.id)}</button>`).join('');
 }
 
 // ===== ADMIN PROGRESS =====
@@ -1648,9 +1645,6 @@ function refreshAdminMemberTabs(){
   // task filter tabs
   const tt=document.getElementById('a-tm');
   if(tt){tt.innerHTML=`<button class="mt on" onclick="aTM='all';renderTasks();setMT(this,'a-tm')">全員</button>`+MB.map(m=>`<button class="mt" onclick="aTM='${m.id}';renderTasks();setMT(this,'a-tm')">${getDN(m.id)}</button>`).join('');}
-  // coaching tabs
-  const coacht=document.getElementById('a-coach-mtabs');
-  if(coacht) coacht.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aCoachMid='${m.id}';renderCoaching();setMT(this,'a-coach-mtabs')">${getDN(m.id)}</button>`).join('');
   // monthly tabs
   const mot2=document.getElementById('a-mo-mtabs');
   if(mot2) mot2.innerHTML=MB.map((m,i)=>`<button class="mt ${i===0?'on':''}" onclick="aMoMid='${m.id}';renderAdminMonthly();setMT(this,'a-mo-mtabs')">${getDN(m.id)}</button>`).join('');
@@ -1992,11 +1986,23 @@ function renderShiftSummary(mid,year,month){
       byCompany[co]=(byCompany[co]||0)+net;
     });
   });
+  const mLimit=160*60;
+  const mRemain=Math.max(0,mLimit-totalNet);
+  const mUsedPct=Math.min(100,Math.round(totalNet/mLimit*100));
+  const mRemainColor=mRemain<20*60?'var(--rd)':mRemain<40*60?'var(--am)':'var(--ac)';
   let html=`<div style="background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rl);padding:14px 16px">
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
       ${sh((totalNet/60).toFixed(1)+'h','実働時間')}
+      ${sh((mRemain/60).toFixed(1)+'h','残リソース')}
       ${sh(totalBrk+'分','休憩合計')}
       ${sh(days.length+'日','出勤日数')}
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);margin-bottom:3px">
+        <span>月間稼働 ${(totalNet/60).toFixed(1)}h / 160h</span>
+        <span style="color:${mRemainColor};font-weight:600">${mUsedPct}%</span>
+      </div>
+      <div class="pt" style="height:8px"><div class="pf" style="width:${mUsedPct}%;background:${mRemainColor}"></div></div>
     </div>`;
   if(Object.keys(byCompany).length>1||!byCompany['未設定']){
     html+=`<div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">会社別稼働</div>`;
@@ -2044,11 +2050,40 @@ function renderAdminMonthly(){
 
   if(!days.length){el.innerHTML='<div class="nd">この月のシフト記録がありません</div>';return;}
 
+  const aMonthLimit=160*60;
+  const aRemainMin=Math.max(0,aMonthLimit-totalNet);
+  const aUsedPct=Math.min(100,Math.round(totalNet/aMonthLimit*100));
+  const aRemainColor=aRemainMin<20*60?'var(--rd)':aRemainMin<40*60?'var(--am)':'var(--ac)';
+
   let html=`<div class="sr" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
     ${sh((totalNet/60).toFixed(1)+'h','実働時間')}
     ${sh(totalBrk+'分','休憩合計')}
     ${sh((totalRaw/60).toFixed(1)+'h','拘束時間')}
     ${sh(days.length+'日','出勤日数')}
+  </div>
+  <div class="cc" style="margin-bottom:16px">
+    <div class="ctt">📊 月間リソース状況（基準: 160h）</div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="text-align:center;flex-shrink:0">
+        <div style="font-size:36px;font-weight:700;color:${aRemainColor}">${(aRemainMin/60).toFixed(1)}h</div>
+        <div style="font-size:12px;color:var(--tx2)">残リソース</div>
+      </div>
+      <div style="flex:1;min-width:160px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);margin-bottom:4px">
+          <span>使用済み ${(totalNet/60).toFixed(1)}h</span>
+          <span style="color:${aRemainColor};font-weight:600">${aUsedPct}%</span>
+        </div>
+        <div class="pt" style="height:12px"><div class="pf" style="width:${aUsedPct}%;background:${aRemainColor}"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-top:4px">
+          <span>0h</span><span>160h</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">
+      ${sh((totalNet/60).toFixed(1)+'/160h','稼働率 '+aUsedPct+'%')}
+      ${sh((aRemainMin/60).toFixed(1)+'h','残リソース')}
+      ${sh(days.length>0?((totalNet/60)/days.length).toFixed(1)+'h/日':'—','1日平均')}
+    </div>
   </div>`;
 
   // company breakdown
