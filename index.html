@@ -229,7 +229,12 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
         <select id="te-me"><option value="all">全員共通</option></select>
       </div>
       <div class="field" style="margin:0"><label>種別</label><select id="te-ty"><option value="daily">日次タスク</option><option value="milestone">マイルストーン</option></select></div>
-      <div class="field" style="margin:0"><label>納期</label><input type="date" id="te-dl"></div>
+      <div class="field" style="margin:0"><label>納期</label>
+        <div style="display:flex;gap:6px">
+          <input type="date" id="te-dl" style="flex:1">
+          <input type="time" id="te-dl-time" style="width:90px;padding:7px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
+        </div>
+      </div>
       <div class="field" style="margin:0"><label>関連ステージ</label>
         <select id="te-st"><option value="">なし</option><option value="ステージ1">ステージ1</option><option value="ステージ2">ステージ2</option><option value="ステージ3">ステージ3</option><option value="ステージ4">ステージ4</option></select>
       </div>
@@ -429,7 +434,12 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
             <select id="nt-me"><option value="all">全員共通</option><option value="m0">メンバー A（田中）</option><option value="m1">メンバー B（鈴木）</option><option value="m2">メンバー C（佐藤）</option></select>
           </div>
           <div class="field"><label>種別</label><select id="nt-ty"><option value="daily">日次タスク</option><option value="milestone">マイルストーン</option></select></div>
-          <div class="field"><label>納期（期限）</label><input type="date" id="nt-dl"></div>
+          <div class="field"><label>納期（期限）</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" id="nt-dl" style="flex:1">
+              <input type="time" id="nt-dl-time" style="width:100px;padding:10px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:14px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none" placeholder="時刻">
+            </div>
+          </div>
           <div class="field"><label>関連ステージ</label>
             <select id="nt-st"><option value="">なし</option><option value="ステージ1">ステージ1</option><option value="ステージ2">ステージ2</option><option value="ステージ3">ステージ3</option><option value="ステージ4">ステージ4</option></select>
           </div>
@@ -458,7 +468,12 @@ h1{font-size:20px;font-weight:600;margin-bottom:6px}
             <select id="bulk-me"><option value="all">全員共通</option><option value="m0">メンバー A（田中）</option><option value="m1">メンバー B（鈴木）</option><option value="m2">メンバー C（佐藤）</option></select>
           </div>
           <div class="field"><label>種別</label><select id="bulk-ty"><option value="daily">日次タスク</option><option value="milestone">マイルストーン</option></select></div>
-          <div class="field"><label>納期（期限）</label><input type="date" id="bulk-dl"></div>
+          <div class="field"><label>納期（期限）</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" id="bulk-dl" style="flex:1">
+              <input type="time" id="bulk-dl-time" style="width:100px;padding:10px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);font-size:14px;font-family:inherit;background:var(--sf);color:var(--tx);outline:none">
+            </div>
+          </div>
           <div class="field"><label>関連ステージ</label>
             <select id="bulk-st"><option value="">なし</option><option value="ステージ1">ステージ1</option><option value="ステージ2">ステージ2</option><option value="ステージ3">ステージ3</option><option value="ステージ4">ステージ4</option></select>
           </div>
@@ -938,7 +953,7 @@ function renderDaily(mid){
             ${t.type==='daily'?'<span class="pill pi-t">日次</span>':'<span class="pill pi-t">マイルストーン</span>'}
             ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
             ${t.company?`<span class="pill pi-a">${esc(t.company)}</span>`:''}
-            ${t.deadline?dlP(t.deadline,!!(done[t.id+':'+checkDate])):''}
+            ${t.deadline?dlP(t.deadline,!!(done[t.id+':'+checkDate]),t.deadlineTime||''):''}
           </div>
           ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
         </div>
@@ -1198,6 +1213,32 @@ function saveSlotEdit(){
   const b=parseInt(document.getElementById('se-b').value||'0',10)||0;
   const co=document.getElementById('se-co').value||'';
   if(!s||!e||!w){alert('すべて入力してください');return;}
+  // ① check max time including edit (exclude current slot from total)
+  const netMin=calcM(s,e,b);
+  const wm=co?getWorkMasters(co).find(x=>x.name===w):null;
+  if(wm&&wm.max>0){
+    const dData=gmd(seEditMid);
+    const existingSlots=((dData.shifts||{})[seEditDay])||[];
+    const alreadyMin=existingSlots.reduce(function(a,sl,i){
+      if(i===seEditIdx) return a; // exclude current slot being edited
+      return (sl.company===co&&sl.work===w)?a+calcM(sl.start,sl.end,sl.brk||0):a;
+    },0);
+    const totalMin=alreadyMin+netMin;
+    if(totalMin>wm.max){
+      const remainMin=Math.max(0,wm.max-alreadyMin);
+      alert('1日の上限を超えます！ 「'+w+'」の上限は'+wm.max+'分（'+(wm.max/60).toFixed(1)+'h）。残り'+remainMin+'分（'+(remainMin/60).toFixed(1)+'h）まで入力できます。');
+      return;
+    }
+    // ② 時間短縮チェック: compare to original slot
+    const origSlot=existingSlots[seEditIdx];
+    if(origSlot){
+      const origNet=calcM(origSlot.start,origSlot.end,origSlot.brk||0);
+      if(netMin<origNet){
+        const saved=origNet-netMin;
+        setTimeout(()=>alert('🎉 時間短縮おめでとうございます！ 「'+w+'」を'+saved+'分（'+(saved/60).toFixed(1)+'h）短縮できました！'),300);
+      }
+    }
+  }
   const data=gmd(seEditMid);
   data.shifts[seEditDay][seEditIdx]={start:s,end:e,work:w,brk:b,company:co};
   smd(seEditMid,data);
@@ -1301,7 +1342,10 @@ function switchTaskMode(mode){
 function addTask(){
   const title=document.getElementById('nt-ti').value.trim();if(!title){alert('タイトルを入力してください');return;}
   const ad=gad();ad.tasks=ad.tasks||[];
-  ad.tasks.push({id:'t'+Date.now(),title,member:document.getElementById('nt-me').value,type:document.getElementById('nt-ty').value,deadline:document.getElementById('nt-dl').value,stage:document.getElementById('nt-st').value,company:document.getElementById('nt-co')?.value||'',desc:document.getElementById('nt-de').value.trim(),createdAt:new Date().toLocaleString('ja-JP')});
+  const dlDate=document.getElementById('nt-dl').value;
+  const dlTime=document.getElementById('nt-dl-time').value;
+  const dlFull=dlDate?(dlDate+(dlTime?' '+dlTime:'')):'' ;
+  ad.tasks.push({id:'t'+Date.now(),title,member:document.getElementById('nt-me').value,type:document.getElementById('nt-ty').value,deadline:dlDate,deadlineTime:dlTime,deadlineFull:dlFull,stage:document.getElementById('nt-st').value,company:document.getElementById('nt-co')?.value||'',desc:document.getElementById('nt-de').value.trim(),createdAt:new Date().toLocaleString('ja-JP')});
   sad(ad);document.getElementById('nt-ti').value='';document.getElementById('nt-dl').value='';document.getElementById('nt-de').value='';renderTasks();
 }
 
@@ -1316,7 +1360,9 @@ function addBulkTasks(){
   const stage=document.getElementById('bulk-st').value;
   const now=new Date().toLocaleString('ja-JP');
   titles.forEach((title,i)=>{
-    const bulkCo=document.getElementById('bulk-co')?.value||''; ad.tasks.push({id:'t'+(Date.now()+i),title,member,type,deadline,stage,company:bulkCo,desc:'',createdAt:now});
+    const bulkDlTime=document.getElementById('bulk-dl-time')?.value||'';
+    const bulkDlFull=deadline?(deadline+(bulkDlTime?' '+bulkDlTime:'')):'' ;
+    const bulkCo=document.getElementById('bulk-co')?.value||''; ad.tasks.push({id:'t'+(Date.now()+i),title,member,type,deadline,deadlineTime:bulkDlTime,deadlineFull:bulkDlFull,stage,company:bulkCo,desc:'',createdAt:now});
   });
   sad(ad);
   document.getElementById('bulk-titles').value='';
@@ -1374,7 +1420,7 @@ function openTaskEdit(id){
   teEditId=id;
   document.getElementById('te-ti').value=t.title||'';
   document.getElementById('te-ty').value=t.type||'daily';
-  document.getElementById('te-dl').value=t.deadline||'';
+  document.getElementById('te-dl').value=t.deadline||''; document.getElementById('te-dl-time').value=t.deadlineTime||'';
   document.getElementById('te-st').value=t.stage||'';
   document.getElementById('te-co').value=t.company||'';
   document.getElementById('te-de').value=t.desc||'';
@@ -1400,7 +1446,7 @@ function saveTaskEdit(){
     title,
     member:document.getElementById('te-me').value,
     type:document.getElementById('te-ty').value,
-    deadline:document.getElementById('te-dl').value,
+    deadline:document.getElementById('te-dl').value, deadlineTime:document.getElementById('te-dl-time').value||'', deadlineFull:document.getElementById('te-dl').value+(document.getElementById('te-dl-time').value?' '+document.getElementById('te-dl-time').value:''),
     stage:document.getElementById('te-st').value,
     company:document.getElementById('te-co').value||'',
     desc:document.getElementById('te-de').value.trim(),
@@ -1465,21 +1511,36 @@ function renderTasks(){
     ${overdueCount?`<span style="font-size:12px;color:var(--rd);font-weight:600">期限切れ ${overdueCount}件</span>`:''}
   </div>`;
 
-  html+='<div class="sc"><div class="sb op" style="border-top:none">';
-  tasks.forEach(t=>{
+  // ④ Split into incomplete and completed
+  const incompleteTasks=tasks.filter(t=>{
+    const cDate=t.deadline||today;
+    const relevantMembers=t.member==='all'?MB.map(m=>m.id):[t.member];
+    return !relevantMembers.some(mid=>(gmd(mid).dailyDone||{})[t.id+':'+cDate]);
+  });
+  let completedTasks=tasks.filter(t=>{
+    const cDate=t.deadline||today;
+    const relevantMembers=t.member==='all'?MB.map(m=>m.id):[t.member];
+    return relevantMembers.some(mid=>(gmd(mid).dailyDone||{})[t.id+':'+cDate]);
+  });
+  // auto-trim: if more than 10 completed tasks, delete oldest from storage
+  if(completedTasks.length>10){
+    const toDelete=completedTasks.slice(0,completedTasks.length-10);
+    const ad2=gad();
+    const deleteIds=new Set(toDelete.map(t=>t.id));
+    ad2.tasks=(ad2.tasks||[]).filter(t=>!deleteIds.has(t.id));
+    sad(ad2);
+    completedTasks=completedTasks.slice(-10);
+  }
+
+  // render incomplete first
+  html+='<div class="sec" style="margin-top:0">未完了タスク（'+incompleteTasks.length+'件）</div>';
+  if(!incompleteTasks.length){html+='<div class="nd">未完了のタスクはありません 🎉</div>';}
+  else{html+='<div class="sc"><div class="sb op" style="border-top:none">';}
+  const renderTaskRow=(t,isDone,completedNames)=>{
     const ml=t.member==='all'?'全員':getDN(t.member)||MB.find(m=>m.id===t.member)?.name||t.member;
     const checkDate=t.deadline||today;
     const isPast=t.deadline&&t.deadline<today;
-    // Check if any relevant member completed it
-    const relevantMembers=t.member==='all'?MB.map(m=>m.id):[t.member];
-    const completedBy=relevantMembers.filter(mid=>{
-      const md=gmd(mid);
-      return (md.dailyDone||{})[t.id+':'+checkDate];
-    });
-    const isDone=completedBy.length>0;
-    const completedNames=completedBy.map(mid=>getDN(mid)||mid).join('、');
-
-    html+=`<div class="tr" style="${isPast&&!isDone?'background:var(--rdl)':''}${isDone?'opacity:0.7':''}">
+    html+=`<div class="tr" style="${isPast&&!isDone?'background:var(--rdl)':''}${isDone?'opacity:0.65':''}">
       <div class="tb">
         <div class="tt" style="${isDone?'text-decoration:line-through;color:var(--tx3)':''}">${esc(t.title)}</div>
         <div class="tps">
@@ -1487,7 +1548,7 @@ function renderTasks(){
           <span class="pill pi-t">${t.type==='daily'?'日次':'マイルストーン'}</span>
           ${t.stage?`<span class="pill pi-s">${esc(t.stage)}</span>`:''}
           ${t.company?`<span class="pill" style="background:var(--bll);color:var(--bl)">${esc(t.company)}</span>`:''}
-          ${t.deadline?dlP(t.deadline,isDone):''}
+          ${t.deadline?dlP(t.deadline,isDone,t.deadlineTime||''):''}
           ${isDone?`<span class="pill" style="background:var(--acl);color:var(--ac)">✓ ${completedNames}完了</span>`:''}
         </div>
         ${t.desc?`<div class="td">${esc(t.desc)}</div>`:''}
@@ -1499,8 +1560,24 @@ function renderTasks(){
         <button class="btn btn-xs btn-d" onclick="delTask('${t.id}')">削除</button>
       </div>
     </div>`;
-  });
-  html+='</div></div>';el.innerHTML=html;
+  };
+  incompleteTasks.forEach(t=>renderTaskRow(t,false,''));
+  if(incompleteTasks.length) html+='</div></div>';
+  // completed section
+  html+='<div class="sec">完了タスク（直近'+completedTasks.length+'件）</div>';
+  if(!completedTasks.length){html+='<div class="nd">完了タスクはありません</div>';}
+  else{
+    html+='<div class="sc"><div class="sb op" style="border-top:none">';
+    completedTasks.forEach(t=>{
+      const cDate=t.deadline||today;
+      const relM=t.member==='all'?MB.map(m=>m.id):[t.member];
+      const cBy=relM.filter(mid=>(gmd(mid).dailyDone||{})[t.id+':'+cDate]);
+      const cNames=cBy.map(mid=>getDN(mid)||mid).join('、');
+      renderTaskRow(t,true,cNames);
+    });
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
 }
 
 // ===== STAGE EDIT (Admin) =====
@@ -2369,7 +2446,16 @@ function renderWorkAvg(mid,containerId){
 function tog(bid,cid){const b=document.getElementById(bid),c=document.getElementById(cid);if(!b||!c)return;const o=b.classList.toggle('op');c.classList.toggle('op',o);}
 function sp(s,chk){const d=s.tasks.filter((_,i)=>chk[s.id+':'+i]===true).length,t=s.tasks.length;return{d,t,p:t>0?Math.round(d/t*100):0};}
 function sh(n,l){return`<div class="st"><div class="sn">${n}</div><div class="sl">${l}</div></div>`}
-function dlP(dl,done){const today=td(),diff=Math.ceil((new Date(dl)-new Date(today))/864e5);if(done)return`<span class="pill" style="background:var(--acl);color:var(--ac)">✓ 完了済</span>`;let cls='pi-ok',txt=`納期: ${dl}`;if(diff<0){cls='pi-ov';txt=`超過: ${dl}`;}else if(diff<=3){cls='pi-w';txt=`残${diff}日`;}return `<span class="pill ${cls}">${txt}</span>`;}
+function dlP(dl,done,dlTime){
+  const today=td(),diff=Math.ceil((new Date(dl)-new Date(today))/864e5);
+  if(done)return`<span class="pill" style="background:var(--acl);color:var(--ac)">✓ 完了済</span>`;
+  const timeStr=dlTime?' '+dlTime:'';
+  let cls='pi-ok',txt='納期: '+dl+timeStr;
+  if(diff<0){cls='pi-ov';txt='超過: '+dl+timeStr;}
+  else if(diff===0){cls='pi-w';txt='本日期限'+(dlTime?' '+dlTime:'');}
+  else if(diff<=3){cls='pi-w';txt='残'+diff+'日'+(dlTime?' ('+dlTime+')':'');}
+  return `<span class="pill ${cls}">${txt}</span>`;
+}
 function td(){return new Date().toISOString().slice(0,10)}
 function fd(s){const d=new Date(s);return`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`}
 function fs(s){const d=new Date(s);return`${d.getMonth()+1}/${d.getDate()}`}
